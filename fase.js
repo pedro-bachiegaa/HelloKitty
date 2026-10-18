@@ -20,7 +20,8 @@ const FASE = {
   transicao5: { ini: 9450, fim: 9750 },   // corredor → arcade
   portao: { x: 2250 },                    // entrada do parque: aqui eles vestem roupa de praia
   saidaParque: { x: 4330 },               // saída do parque: aqui voltam à roupa normal
-  condominio: { x: 6620 },                // o portão do Jau: grande, bem atrás do carro de churros
+  condominio: { x: 6620 },
+  entradaCarros: { x0: 6730, x1: 7010 },  // o vão do portão por onde entram os carros (asfalto, sem muro)                // o portão do Jau: grande, bem atrás do carro de churros
 
   // Brinquedo da boia (OPCIONAL): a rampa em U fica dentro da piscina, ao fundo.
   //  x       = torre azul / escada       cx = centro da rampa em U
@@ -114,7 +115,7 @@ const FASE = {
   arbustos: [4850, 5480, 5780, 6040, 6330],
 
   // o muro da rua: alto, contínuo e pintado (grafite e piche). Fica no mesmo plano do portão do Jau.
-  muros: [{ x0: 4380, x1: 6452 }, { x0: 6830, x1: 7400 }],   // um muro só, contínuo, até o portão
+  muros: [{ x0: 4380, x1: 6452 }, { x0: 7010, x1: 7400 }],   // um muro só, contínuo, até o portão
 
   // O PEDIDO (guardado): onde o Pedro espera. Hoje fica desligado (pedidoAtivo: false no config).
   pedro: { x: 4150 },

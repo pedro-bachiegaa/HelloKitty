@@ -2696,6 +2696,7 @@ const Jogo = (() => {
     if (visivel(FASE.rampa.x, 140)) torreRampa();
 
     for (const p of FASE.plataformas) plataforma(p);
+    entradaCarros();
 
     for (const c of coracoes) {
       if (c.pego || c.ang !== undefined) continue;
@@ -3465,6 +3466,35 @@ const Jogo = (() => {
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+  }
+
+  // o vão de entrada de carros do condomínio: meio-fio rebaixado com asfalto, sem muro, e a pista lá dentro
+  function entradaCarros() {
+    const E = FASE.entradaCarros, y = FASE.chao;
+    if (E.x1 < cam.x - 30 || E.x0 > cam.x + viewW + 30) return;
+    const alfa = mistura2(E.x0) * (1 - mistura3(E.x0));
+    if (alfa < 0.05) return;
+    ctx.save();
+    ctx.globalAlpha = alfa;
+    // a pista que segue pra dentro do condomínio (atrás da cancela)
+    ctx.fillStyle = "#7a7068";
+    ctx.fillRect(E.x0 - 6, y - 16, E.x1 - E.x0 + 12, 17);
+    ctx.fillStyle = "#6a625a";
+    ctx.fillRect(E.x0 - 6, y - 16, E.x1 - E.x0 + 12, 3);
+    ctx.fillStyle = "rgba(245,215,110,.9)";
+    for (let x = E.x0 + 10; x < E.x1 - 20; x += 44) ctx.fillRect(x, y - 9, 24, 3);
+    // o meio-fio rebaixado: asfalto por cima da calçada, com rampinha nas duas pontas
+    ctx.fillStyle = "#645c54";
+    ctx.beginPath();
+    ctx.moveTo(E.x0 - 22, y + 23);
+    ctx.lineTo(E.x0, y + 1);
+    ctx.lineTo(E.x1, y + 1);
+    ctx.lineTo(E.x1 + 22, y + 23);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(245,215,110,.9)";
+    for (let x = E.x0 + 14; x < E.x1 - 20; x += 44) ctx.fillRect(x, y + 11, 24, 3);
+    ctx.restore();
   }
 
   // portão de entrada do parque
