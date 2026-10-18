@@ -87,3 +87,10 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 
 ## Publicar no Cloudflare Pages
 É um site estático: não tem build. Aponte o Pages para este repositório, sem comando de build e com a pasta raiz (`/`) como diretório de saída. Coloque a música em `musica/nossa-musica.mp3` e as fotos em `fotos/` antes de publicar.
+
+## Fase final: o parque e o piquenique
+- Depois de ganhar a capivara no arcade, aparece a porta **SAÍDA**; ao atravessá-la (fade branco) ela chega a um parque inspirado no Ibirapuera: lago com patinhos, pedalinho e passarela ao fundo, a Oca e a marquise ao longe, árvores, bancos, carrinho de pipoca e gente passeando (famílias, ciclista, corredor, casal, cachorro, criança com pipa).
+- No fim do parque o **Pedro está sentado numa toalha de piquenique** (salgadinhos, suco, tintas, pincéis, lápis de cor e cavaletes com telas, uma delas com o retrato da Kitty), com **3 capivaras** em volta: uma pastando, uma deitada com um passarinho nas costas e uma passeando ao fundo. O céu vira fim de tarde conforme ela chega perto.
+- O pedido é a cena de antes (ele se levanta sem jeito, escreve escondido na placa, vira e mostra), agora no piquenique. Depois do Sim: abraço, corações e a mensagem final.
+- Atalhos de ensaio: `?saida` (perto da porta do arcade), `?ibira` (já no parque) e `?final` (perto do piquenique).
+- As posições do piquenique e das capivaras ficam em `FASE.pedro` e `FASE.ibira.capivaras` (`fase.js`).

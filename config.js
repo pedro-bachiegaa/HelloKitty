@@ -56,6 +56,8 @@ const CONFIG = {
   garraQuase: "Quase! Tenta de novo 😅",
   garraEscorregou: "Escorregou! 😮",
   garraGanhou: "Conseguiu! A capivara é sua! 🦫💖",
+  textoSaidaArcade: "Que tal um ar fresco? A saída é logo ali ➜",
+  textoChegadaParque: "Que dia lindo no parque! 🌳☀️",
 
   // Música: coloque o arquivo na pasta "musica" com este nome (ou mude aqui)
   musica: "musica/nossa-musica.mp3",

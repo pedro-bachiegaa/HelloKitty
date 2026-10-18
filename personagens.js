@@ -43,7 +43,7 @@ function coracao(ctx, x, y, tam, cor) {
 
 // o = { x, y, dir, anim, pose, tipo, piscando, inclinacao, flores, tremer, traje, rosto, suor, olhar, t }
 // tipo:  "kitty" | "pedro" | "amiga"
-// pose:  "parado" | "andando" | "pulando" | "placa" | "abraco" | "tchau" | "escrever"
+// pose:  "parado" | "sentado" | "andando" | "pulando" | "placa" | "abraco" | "tchau" | "escrever"
 // traje: "dia" (roupa normal) | "praia" (maiô / sunga)
 // rosto: "normal" | "susto" | "feliz" | "timido"
 // suor:  0..1 (gotinhas de suor na testa)   olhar: -1..1 (pra onde os olhos tímidos olham)
@@ -64,15 +64,23 @@ function desenharGato(ctx, o) {
   ctx.translate(o.x + (o.tremer || 0), o.y);
   ctx.scale((o.dir || 1) * (o.sx || 1), o.sy || 1); // sx/sy: esticar no pulo, amassar no pouso
 
-  // pernas
+  // pernas (sentado: esticadas pra frente, no chão)
+  const sentado = pose === "sentado";
   const levE = andando ? Math.max(0, s) * 4 : ar ? 3 : 0;
   const levD = andando ? Math.max(0, -s) * 4 : ar ? 3 : 0;
-  caminhoRetArred(ctx, -9, -10 - levE, 8, 10, 3);
-  preencherContornar(ctx, "#fff");
-  caminhoRetArred(ctx, 1, -10 - levD, 8, 10, 3);
-  preencherContornar(ctx, "#fff");
+  if (sentado) {
+    caminhoRetArred(ctx, -2, -9, 21, 9, 4);
+    preencherContornar(ctx, "#fff");
+    caminhoRetArred(ctx, 1, -15, 18, 7, 3);
+    preencherContornar(ctx, "#fff");
+  } else {
+    caminhoRetArred(ctx, -9, -10 - levE, 8, 10, 3);
+    preencherContornar(ctx, "#fff");
+    caminhoRetArred(ctx, 1, -10 - levD, 8, 10, 3);
+    preencherContornar(ctx, "#fff");
+  }
 
-  ctx.translate(0, andando ? -Math.abs(s) * 1.5 : 0);
+  ctx.translate(0, sentado ? 8 : andando ? -Math.abs(s) * 1.5 : 0);
 
   // corpo
   if (vestido) {

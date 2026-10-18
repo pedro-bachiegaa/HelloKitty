@@ -21,6 +21,7 @@ const Jogo = (() => {
   let chegadaFeita = false;      // a cena do churros só acontece uma vez
   let segurandoChurros = false;  // a Kitty anda com o churros na mão até o arcade
   let garraGanha = false;        // já pegou a capivara?
+  let minX = 15;                 // depois de entrar no parque ela não volta pro arcade
   const colet = { churros: -99, capi: -99, vChurros: false, vCapi: false }; // quando cada coletável entrou no painel
   const cam = { x: 0, y: 0 };
   const particulas = [];
@@ -78,6 +79,8 @@ const Jogo = (() => {
     if (q.includes("final")) CONFIG.pedidoAtivo = true; // ?final liga o pedido (guardado) pra ensaiar
     const x0 = q.includes("final") ? FASE.pedro.x - 420
       : q.includes("rampa") ? FASE.rampa.entrada.ini - 200
+      : q.includes("saida") ? FASE.saidaArcade.x - 220
+      : q.includes("ibira") ? FASE.ibira.inicio
       : q.includes("arcade") ? FASE.arcade.porta - 130
       : q.includes("shopping") ? FASE.shopping.entrada - 400
       : q.includes("churros") ? FASE.churros.x - 240
@@ -93,8 +96,10 @@ const Jogo = (() => {
     rampaFeita = false;
     chegadaFeita = segurandoChurros = garraGanha = false;
     if (x0 > FASE.churros.x + 100) { chegadaFeita = true; segurandoChurros = true; } // atalhos de ensaio: já passou pelo churros
+    if (x0 > FASE.arcade.zona.fim) { garraGanha = true; segurandoChurros = false; }  // ... e pela máquina da capivara
+    minX = x0 >= FASE.ibira.inicio ? FASE.ibira.inicio - 30 : 15;
     amiga.x = FASE.rampa.x - 124; // espera ao lado da escada
-    pedro = { x: FASE.pedro.x, y: FASE.chao, dir: -1, pose: "parado", flores: true, pulo: 0 };
+    pedro = { x: FASE.pedro.x, y: FASE.chao, dir: -1, pose: "sentado", flores: true, pulo: 0 };
     Object.assign(cena, {
       t: 0, te: 0, estagio: "chegando", perguntou: false, proxCoracao: 0,
       zoom: 1, foco: 0, pop: 0, reveal: 0, levanta: 0, giro: 0, lean: 0, buque: null,
@@ -160,6 +165,7 @@ const Jogo = (() => {
     else if (estado === "resgate") atualizarResgate(dt);
     else if (estado === "chegada") atualizarChegada(dt);
     else if (estado === "garra") atualizarGarra(dt);
+    else if (estado === "saindo") atualizarSaidaArcade(dt);
     else if (estado === "cena" || estado === "abraco") atualizarCena(dt);
     atualizarFade(dt);
     atualizarTraje();
@@ -270,7 +276,7 @@ const Jogo = (() => {
     k.vy = Math.min(k.vy + GRAVIDADE * dt, 900);
     const vyAntes = k.vy;
     const yAntes = k.y;
-    k.x = Math.max(15, Math.min(FASE.largura - 15, k.x + k.vx * dt));
+    k.x = Math.max(minX, Math.min(garraGanha ? FASE.largura - 15 : FASE.saidaArcade.x - 40, k.x + k.vx * dt));
     k.y += k.vy * dt;
 
     const estavaNoAr = !k.noChao;
@@ -317,8 +323,627 @@ const Jogo = (() => {
       }
     }
 
-    if (CONFIG.pedidoAtivo && k.x >= pedro.x - 200) return iniciarCena();   // o pedido (guardado)
+    if ((CONFIG.pedidoAtivo || minX >= FASE.ibira.inicio - 30) && k.x >= pedro.x - 200) return iniciarCena();   // o pedido, no piquenique
     if (!CONFIG.pedidoAtivo && !chegadaFeita && k.x >= FASE.churros.x - 170) return iniciarChegada();
+    if (!CONFIG.pedidoAtivo && garraGanha && minX < FASE.ibira.inicio - 30 && k.x >= FASE.saidaArcade.x - 8) return iniciarSaidaArcade();
+  }
+
+
+  // =====================================================================
+  //  FASE FINAL — o parque (inspirado no Ibirapuera): lago ao fundo, árvores, gente passeando
+  // =====================================================================
+  function plataformaIbira(p) {
+    // gramado por baixo
+    ctx.fillStyle = "#6db85a"; ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle = "rgba(255,255,255,.07)";
+    for (let y = p.y + 34; y < p.y + p.h; y += 34) ctx.fillRect(p.x, y, p.w, 12);
+    // tufinhos de grama
+    ctx.fillStyle = "#5aa34a";
+    for (let x = Math.floor(p.x / 38) * 38; x < p.x + p.w; x += 38) {
+      if (x < p.x || x > p.x + p.w - 10) continue;
+      const yy = p.y + 24 + (x * 7 % 40);
+      ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + 3, yy - 8); ctx.lineTo(x + 6, yy); ctx.lineTo(x + 9, yy - 6); ctx.lineTo(x + 11, yy); ctx.closePath(); ctx.fill();
+    }
+    // o caminho de pedrinhas onde ela anda
+    ctx.fillStyle = "#e7d6b1"; ctx.fillRect(p.x, p.y, p.w, 14);
+    ctx.fillStyle = "#d3bd90"; ctx.fillRect(p.x, p.y + 12, p.w, 3);
+    for (let x = Math.floor(p.x / 26) * 26; x < p.x + p.w; x += 26) {
+      const px = x + 8 + rnd(x) * 10;
+      if (px < p.x || px > p.x + p.w) continue;
+      ctx.fillStyle = rnd(x + 5) > 0.5 ? "#f3e6c8" : "#cdb88c";
+      elipse(ctx, px, p.y + 5 + rnd(x + 9) * 5, 3 + rnd(x + 3) * 2, 1.8); ctx.fill();
+    }
+  }
+
+  function patoLago(x, y, dir, t) {
+    ctx.save(); ctx.translate(x, y + Math.sin(t * 2) * 1.2); ctx.scale(dir, 1);
+    ctx.fillStyle = "rgba(255,255,255,.5)"; elipse(ctx, 0, 4, 10, 2.2); ctx.fill();
+    ctx.fillStyle = "#fff"; elipse(ctx, 0, 0, 8, 5); ctx.fill();
+    elipse(ctx, 7, -5, 4, 4); ctx.fill();
+    ctx.fillStyle = "#ffa733"; ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(14, -4); ctx.lineTo(10, -3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#e8e8f2"; ctx.beginPath(); ctx.moveTo(-8, -1); ctx.lineTo(-13, -5); ctx.lineTo(-6, 2); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function camadaIbira(camX, chaoTela, alfa) {
+    if (alfa <= 0.01) return;
+    ctx.save();
+    ctx.globalAlpha = alfa;
+    const topoLago = chaoTela - 66, baseLago = chaoTela - 16;
+
+    // o fim de tarde vai chegando conforme ela se aproxima do piquenique
+    const entardecer = clamp01((camX + viewW / 2 - (FASE.pedro.x - 700)) / 520);
+    if (entardecer > 0.01) {
+      const eg = ctx.createLinearGradient(0, 0, 0, topoLago);
+      eg.addColorStop(0, `rgba(255,150,120,${0.5 * entardecer * alfa})`); eg.addColorStop(1, `rgba(255,214,150,${0.55 * entardecer * alfa})`);
+      ctx.fillStyle = eg; ctx.fillRect(0, 0, viewW, topoLago + 6);
+    }
+    // solzão e nuvens
+    const sx = viewW * 0.78, sy = chaoTela - 270 + entardecer * 90;
+    const br = ctx.createRadialGradient(sx, sy, 8, sx, sy, 130);
+    br.addColorStop(0, "rgba(255,248,200,.9)"); br.addColorStop(1, "rgba(255,248,200,0)");
+    ctx.fillStyle = br; ctx.fillRect(sx - 130, sy - 130, 260, 260);
+    ctx.fillStyle = "#fff6c8"; elipse(ctx, sx, sy, 20, 20); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    {
+      const esp = 260, desl = (camX * 0.07 + tempo * 5) % esp;
+      for (let i = -1; i < viewW / esp + 2; i++) {
+        const x = i * esp - desl, y = chaoTela - 330 + (i % 2 ? 40 : 0) + ((i * 37) % 30);
+        for (const [dx, dy, r] of [[0, 0, 20], [22, -9, 25], [48, 0, 19], [70, 3, 14]]) { elipse(ctx, x + dx, y + dy, r, r * 0.75); ctx.fill(); }
+      }
+    }
+
+    // prédios de São Paulo bem ao longe
+    {
+      const passo = 70, off = camX * 0.04, ini = Math.floor(off / passo) - 1;
+      for (let i = ini; i < ini + viewW / passo + 3; i++) {
+        const x = i * passo - off, w = 34 + Math.floor(rnd(i + 410) * 3) * 8, h = 50 + Math.floor(rnd(i + 411) * 6) * 18;
+        ctx.fillStyle = ["rgba(150,176,208,.55)", "rgba(165,186,214,.5)", "rgba(138,166,200,.55)"][((i % 3) + 3) % 3];
+        ctx.fillRect(x, topoLago - 30 - h, w, h + 34);
+      }
+    }
+    // a Oca (domo branco) e a marquise, ao longe
+    {
+      const P = 1500, off = camX * 0.1, ini = Math.floor(off / P) - 1;
+      for (let k = ini; k < ini + viewW / P + 3; k++) {
+        const ox = k * P - off + 190, base = topoLago - 12;
+        ctx.fillStyle = "#f4f1ea";
+        ctx.beginPath(); ctx.ellipse(ox, base, 70, 38, 0, Math.PI, 0); ctx.fill();
+        ctx.fillStyle = "#dcd8cc"; ctx.fillRect(ox - 74, base - 4, 148, 8);
+        ctx.strokeStyle = "rgba(160,150,130,.5)"; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.ellipse(ox, base, 46, 38, 0, Math.PI, 0); ctx.moveTo(ox - 22, base); ctx.ellipse(ox, base, 22, 38, 0, Math.PI, 0); ctx.stroke();
+        // marquise: laje comprida sobre pilares
+        ctx.fillStyle = "#eeeae0"; ctx.fillRect(ox + 92, base - 24, 250, 7);
+        ctx.fillStyle = "#d9d4c6";
+        for (let px = ox + 100; px < ox + 340; px += 30) ctx.fillRect(px, base - 17, 4, 21);
+      }
+    }
+    // colina de árvores ao longe
+    {
+      const passo = 44, off = camX * 0.16, ini = Math.floor(off / passo) - 1;
+      for (let i = ini; i < ini + viewW / passo + 3; i++) {
+        const x = i * passo - off, r = 22 + rnd(i + 430) * 14;
+        ctx.fillStyle = ["#5e9b6a", "#6aa874", "#548f62"][((i % 3) + 3) % 3];
+        elipse(ctx, x, topoLago - 2, r, r * 0.8); ctx.fill();
+      }
+      ctx.fillStyle = "#5e9b6a"; ctx.fillRect(0, topoLago - 2, viewW, 8);
+    }
+
+    // o lago
+    const ag = ctx.createLinearGradient(0, topoLago, 0, baseLago);
+    ag.addColorStop(0, "#8ddcf4"); ag.addColorStop(1, "#4fb4e0");
+    ctx.fillStyle = ag; ctx.fillRect(0, topoLago + 4, viewW, baseLago - topoLago - 4);
+    // reflexo e brilhinhos
+    ctx.fillStyle = "rgba(255,255,255,.5)";
+    for (let i = 0; i < 26; i++) {
+      const w = 8 + (i * 5) % 14, m = viewW + 60;
+      const x = (((i * 53 - camX * 0.3 + tempo * (i % 2 ? 5 : -4)) % m) + m) % m - 30;
+      ctx.globalAlpha = alfa * (0.25 + 0.35 * Math.sin(tempo * 1.7 + i));
+      ctx.fillRect(x, topoLago + 10 + (i * 11) % 36, w, 2);
+    }
+    ctx.globalAlpha = alfa;
+    // passarela de madeira
+    {
+      const P = 1700, off = camX * 0.3, ini = Math.floor(off / P) - 1;
+      for (let k = ini; k < ini + viewW / P + 3; k++) {
+        const bx = k * P - off + 120, by = topoLago + 18;
+        ctx.strokeStyle = "#a9774a"; ctx.lineWidth = 6; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(bx, by + 6); ctx.quadraticCurveTo(bx + 80, by - 22, bx + 160, by + 6); ctx.stroke();
+        ctx.strokeStyle = "#8a5d37"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(bx, by - 8); ctx.quadraticCurveTo(bx + 80, by - 36, bx + 160, by - 8); ctx.stroke();
+        for (let q = 0; q <= 8; q++) {
+          const tt = q / 8, yy = by + 6 + (-28 * 2 * tt * (1 - tt) * 0.5 * 2) / 1;
+          ctx.beginPath(); ctx.moveTo(bx + 160 * tt, yy - 14 + (tt * (1 - tt)) * 0); ctx.lineTo(bx + 160 * tt, yy); ctx.stroke();
+        }
+        ctx.fillStyle = "#8a5d37"; ctx.fillRect(bx - 3, by + 4, 6, 16); ctx.fillRect(bx + 157, by + 4, 6, 16);
+      }
+    }
+    // patinhos e um pedalinho de cisne
+    {
+      const P = 560, off = camX * 0.3;
+      for (let k = Math.floor(off / P) - 1; k < Math.floor(off / P) + viewW / P + 3; k++) {
+        const x = k * P - off + 140 + Math.sin(tempo * 0.4 + k) * 40, y = topoLago + 26 + (((k % 2) + 2) % 2) * 14;
+        const d = Math.cos(tempo * 0.4 + k) > 0 ? 1 : -1;
+        patoLago(x, y, d, tempo + k);
+        patoLago(x - d * 20, y + 4, d, tempo + k + 1);
+      }
+      const PB = 1300, offB = camX * 0.3 - tempo * 6;
+      for (let k = Math.floor(offB / PB) - 1; k < Math.floor(offB / PB) + viewW / PB + 3; k++) {
+        const bx = k * PB - offB + 380, by = topoLago + 36 + Math.sin(tempo * 1.3 + k) * 1;
+        ctx.fillStyle = "#fff"; elipse(ctx, bx, by, 24, 9); ctx.fill();
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 6; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(bx + 14, by - 3); ctx.quadraticCurveTo(bx + 26, by - 14, bx + 20, by - 26); ctx.stroke();
+        ctx.fillStyle = "#fff"; elipse(ctx, bx + 20, by - 27, 5, 4); ctx.fill();
+        ctx.fillStyle = "#ffa733"; ctx.beginPath(); ctx.moveTo(bx + 24, by - 28); ctx.lineTo(bx + 30, by - 26); ctx.lineTo(bx + 24, by - 25); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#ff6fa5"; ctx.fillRect(bx - 22, by - 2, 44, 3);
+      }
+    }
+    // margem gramada
+    ctx.fillStyle = "#8fd16f"; ctx.fillRect(0, baseLago - 6, viewW, chaoTela - baseLago + 8);
+    ctx.fillStyle = "#7bc35d"; ctx.fillRect(0, baseLago - 6, viewW, 4);
+    // árvores grandes na margem
+    {
+      const passo = 190, off = camX * 0.55, ini = Math.floor(off / passo) - 1;
+      for (let i = ini; i < ini + viewW / passo + 3; i++) {
+        const x = i * passo - off + rnd(i + 450) * 60, esc = 0.85 + rnd(i + 451) * 0.5, by = chaoTela - 6;
+        ctx.fillStyle = "#7a5230"; ctx.fillRect(x - 4 * esc, by - 70 * esc, 8 * esc, 70 * esc);
+        for (const [dx, dy, r, c] of [[0, -100, 40, "#4f9e55"], [-30, -80, 28, "#58a85d"], [30, -82, 29, "#58a85d"], [8, -118, 26, "#6cba6a"], [-18, -112, 20, "#63b264"]]) {
+          ctx.fillStyle = c; elipse(ctx, x + dx * esc, by + dy * esc, r * esc, r * esc * 0.92); ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // ----- gente do parque -----
+  const PELES = ["#ffd9b8", "#f2bf94", "#c98f63", "#8d5a3c"];
+  const CABELOS = ["#3b2a22", "#1f1a17", "#b5651d", "#e8c15a", "#6b3a1e"];
+  const ROUPAS = ["#ff7aa8", "#4cc9f0", "#ffd23f", "#7be08f", "#b48bff", "#ff8a3d", "#ef476f", "#06d6a0"];
+  const pingPong = (d, Ls) => { const m = ((d % (2 * Ls)) + 2 * Ls) % (2 * Ls); return m < Ls ? [m, 1] : [2 * Ls - m, -1]; };
+
+  // um bonequinho passeando (o = { pele, cabelo, camisa, calca, saia, crianca, dir, anim, parado, esc, chapeu, bandana })
+  function bonequinho(x, y, o) {
+    const e = (o.esc || 1) * (o.crianca ? 0.72 : 1), dir = o.dir || 1, s = o.parado ? 0 : Math.sin(o.anim || 0), bal = o.balanco === undefined ? 1 : o.balanco;
+    ctx.save();
+    ctx.translate(x, y - (o.parado ? 0 : Math.abs(s) * 1.2 * e));
+    ctx.scale(dir * e, e);
+    ctx.lineCap = "round";
+    // pernas
+    ctx.strokeStyle = o.calca; ctx.lineWidth = 4.2;
+    if (!o.sentado) { ctx.beginPath(); ctx.moveTo(-2, -16); ctx.lineTo(-2 + s * 6, -1); ctx.moveTo(2, -16); ctx.lineTo(2 - s * 6, -1); ctx.stroke(); }
+    // corpo
+    caminhoRetArred(ctx, -6, -34, 12, 19, 5); ctx.fillStyle = o.camisa; ctx.fill();
+    if (o.saia) { ctx.fillStyle = o.calca; ctx.beginPath(); ctx.moveTo(-6, -22); ctx.lineTo(6, -22); ctx.lineTo(9, -11); ctx.lineTo(-9, -11); ctx.closePath(); ctx.fill(); }
+    // braços
+    ctx.strokeStyle = o.camisa; ctx.lineWidth = 3.4;
+    ctx.beginPath(); ctx.moveTo(-5, -31); ctx.lineTo(-5 - s * 5 * bal, -21); ctx.moveTo(5, -31); ctx.lineTo(5 + s * 5 * bal, -21); ctx.stroke();
+    // cabeça
+    ctx.fillStyle = o.pele; elipse(ctx, 0, -41, 6.2, 6.5); ctx.fill();
+    ctx.fillStyle = o.cabelo;
+    ctx.beginPath(); ctx.ellipse(-0.5, -42.5, 6.6, 5.6, 0, Math.PI * 0.95, Math.PI * 2.05); ctx.fill();
+    if (o.saia || o.cabeludo) { ctx.fillRect(-7, -43, 3.2, 10); }
+    if (o.chapeu) { ctx.fillStyle = o.chapeu; ctx.fillRect(-9, -46, 18, 2.4); ctx.beginPath(); ctx.ellipse(0, -46, 5.6, 4, 0, Math.PI, 0); ctx.fill(); }
+    if (o.bandana) { ctx.fillStyle = o.bandana; ctx.fillRect(-6.4, -45.5, 12.8, 2.6); }
+    ctx.fillStyle = "#3a2a2a"; elipse(ctx, 2.6, -40.5, 0.9, 1.1); ctx.fill();
+    ctx.restore();
+  }
+
+  function cachorrinho(x, y, dir, anim, cor) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+    const s = Math.sin(anim);
+    ctx.strokeStyle = cor; ctx.lineWidth = 2.6; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(-6, -7); ctx.lineTo(-6 + s * 4, -1); ctx.moveTo(-3, -7); ctx.lineTo(-3 - s * 4, -1); ctx.moveTo(5, -7); ctx.lineTo(5 - s * 4, -1); ctx.moveTo(8, -7); ctx.lineTo(8 + s * 4, -1); ctx.stroke();
+    ctx.fillStyle = cor; elipse(ctx, 0, -10, 10, 5.5); ctx.fill();
+    elipse(ctx, 11, -15, 5, 4.6); ctx.fill();
+    ctx.fillStyle = "#5a3a22"; elipse(ctx, 9, -17, 2, 3.4); ctx.fill();
+    ctx.fillStyle = "#2a1a14"; elipse(ctx, 15, -15, 1.4, 1.2); ctx.fill();
+    ctx.strokeStyle = cor; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(-10, -12); ctx.lineTo(-15, -17 + Math.sin(anim * 3) * 3); ctx.stroke();
+    ctx.restore();
+  }
+
+  function ciclistaParque(x, y, dir, anim, i) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+    ctx.strokeStyle = "#2f2a36"; ctx.lineWidth = 2;
+    for (const wx of [-14, 14]) {
+      ctx.beginPath(); ctx.arc(wx, -9, 9, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 1;
+      for (let k = 0; k < 3; k++) { const a = anim * 2 + k * Math.PI / 3; ctx.beginPath(); ctx.moveTo(wx - Math.cos(a) * 9, -9 - Math.sin(a) * 9); ctx.lineTo(wx + Math.cos(a) * 9, -9 + Math.sin(a) * 9); ctx.stroke(); }
+      ctx.lineWidth = 2;
+    }
+    ctx.strokeStyle = ROUPAS[i % ROUPAS.length]; ctx.lineWidth = 2.6;
+    ctx.beginPath(); ctx.moveTo(-14, -9); ctx.lineTo(-4, -22); ctx.lineTo(10, -22); ctx.lineTo(14, -9); ctx.moveTo(-4, -22); ctx.lineTo(0, -9); ctx.lineTo(14, -9); ctx.stroke();
+    ctx.strokeStyle = "#2f2a36"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(10, -22); ctx.lineTo(9, -29); ctx.lineTo(13, -29); ctx.stroke();
+    // a pessoa (pernas pedalando)
+    const a = anim * 2;
+    ctx.strokeStyle = "#3b4a7a"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(-2, -27); ctx.lineTo(2 + Math.cos(a) * 4, -11 + Math.sin(a) * 4); ctx.moveTo(-2, -27); ctx.lineTo(2 - Math.cos(a) * 4, -11 - Math.sin(a) * 4); ctx.stroke();
+    caminhoRetArred(ctx, -7, -46, 11, 20, 5); ctx.fillStyle = ROUPAS[(i + 3) % ROUPAS.length]; ctx.fill();
+    ctx.strokeStyle = ROUPAS[(i + 3) % ROUPAS.length]; ctx.lineWidth = 3.2; ctx.beginPath(); ctx.moveTo(1, -43); ctx.lineTo(10, -30); ctx.stroke();
+    ctx.fillStyle = PELES[i % PELES.length]; elipse(ctx, 0, -52, 6, 6.3); ctx.fill();
+    ctx.fillStyle = "#e94560"; ctx.beginPath(); ctx.ellipse(0, -54, 7, 5.5, 0, Math.PI, 0); ctx.fill(); // capacete
+    ctx.restore();
+  }
+
+  function pessoaParque(P, t) {
+    const y = FASE.chao - 9, sx = (n) => n; // ficam um pouquinho atrás, na grama
+    const cor = (n, lista) => lista[Math.floor(rnd(P.i * 17 + n) * lista.length)];
+    const base = { esc: 0.92 };
+    if (P.tipo === "pipa") {
+      const x = P.x + Math.sin(t * 0.3 + P.i) * 14, dir = Math.cos(t * 0.3 + P.i) > 0 ? 1 : -1;
+      const kx = x + 48 + Math.sin(t * 0.9) * 10, ky = FASE.chao - 150 + Math.sin(t * 1.3) * 9;
+      ctx.strokeStyle = "rgba(60,60,80,.6)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x + 4, y - 26); ctx.quadraticCurveTo(x + 24, y - 80, kx, ky); ctx.stroke();
+      ctx.save(); ctx.translate(kx, ky); ctx.rotate(Math.sin(t * 1.3) * 0.25);
+      ctx.fillStyle = "#ff4d88"; ctx.beginPath(); ctx.moveTo(0, -14); ctx.lineTo(10, 0); ctx.lineTo(0, 16); ctx.lineTo(-10, 0); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#ffd23f"; ctx.beginPath(); ctx.moveTo(0, -14); ctx.lineTo(10, 0); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "#ff4d88"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(0, 16); for (let k = 1; k <= 6; k++) ctx.lineTo(Math.sin(t * 4 + k) * 4, 16 + k * 5); ctx.stroke();
+      ctx.restore();
+      bonequinho(x, y, { ...base, crianca: true, dir: 1, pele: cor(1, PELES), cabelo: cor(2, CABELOS), camisa: cor(3, ROUPAS), calca: "#3b4a7a", parado: true });
+      // bracinho levantado segurando a linha
+      ctx.strokeStyle = cor(3, ROUPAS); ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x + 3, y - 24); ctx.lineTo(x + 5, y - 32); ctx.stroke();
+      return;
+    }
+    const [d, dir] = pingPong(t * P.v + P.i * 70, P.x1 - P.x0);
+    const x = P.x0 + d, anim = t * (P.v / 5 + 4);
+    if (P.tipo === "ciclista") return ciclistaParque(x, y + 3, dir, t * 8, P.i);
+    if (P.tipo === "cachorro") {
+      cachorrinho(x + dir * 30, y, dir, anim, "#c98a4a");
+      ctx.strokeStyle = "rgba(60,40,40,.7)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + dir * 6, y - 24); ctx.lineTo(x + dir * 24, y - 12); ctx.stroke();
+      return bonequinho(x, y, { ...base, dir, anim, pele: cor(1, PELES), cabelo: cor(2, CABELOS), camisa: cor(3, ROUPAS), calca: "#e8e2d6", saia: true });
+    }
+    if (P.tipo === "corredor") {
+      return bonequinho(x, y, { ...base, dir, anim, balanco: 1.8, pele: cor(1, PELES), cabelo: cor(2, CABELOS), camisa: cor(3, ROUPAS), calca: "#2f3b55", bandana: "#ef476f" });
+    }
+    if (P.tipo === "casal") {
+      bonequinho(x - dir * 9, y, { ...base, dir, anim, pele: cor(1, PELES), cabelo: cor(2, CABELOS), camisa: cor(3, ROUPAS), calca: "#3b4a7a" });
+      return bonequinho(x + dir * 9, y, { ...base, dir, anim: anim + 0.4, pele: cor(4, PELES), cabelo: cor(5, CABELOS), camisa: cor(6, ROUPAS), calca: "#b48bff", saia: true, cabeludo: true });
+    }
+    // família: mãe, criança e pai, juntinhos
+    bonequinho(x, y, { ...base, dir, anim, pele: cor(1, PELES), cabelo: cor(2, CABELOS), camisa: cor(3, ROUPAS), calca: "#3b4a7a" });
+    bonequinho(x - dir * 17, y, { ...base, crianca: true, dir, anim: anim * 1.4, pele: cor(4, PELES), cabelo: cor(5, CABELOS), camisa: cor(6, ROUPAS), calca: "#ffd23f" });
+    bonequinho(x - dir * 32, y, { ...base, dir, anim: anim + 0.5, pele: cor(7, PELES), cabelo: cor(8, CABELOS), camisa: cor(9, ROUPAS), calca: "#7be08f", saia: true, cabeludo: true, chapeu: "#ffe08a" });
+  }
+
+  function bancoParque(x, i) {
+    const y = FASE.chao;
+    ctx.fillStyle = "#6b4a2e"; ctx.fillRect(x - 24, y - 12, 4, 12); ctx.fillRect(x + 20, y - 12, 4, 12);
+    ctx.fillStyle = "#b9824f"; ctx.fillRect(x - 28, y - 18, 56, 6); ctx.fillRect(x - 28, y - 34, 56, 5); ctx.fillRect(x - 28, y - 27, 56, 5);
+    ctx.fillStyle = "#6b4a2e"; ctx.fillRect(x - 26, y - 34, 3, 18); ctx.fillRect(x + 23, y - 34, 3, 18);
+    // dois namorados no banco do meio, um bom dia no primeiro
+    if (i === 1) {
+      bonequinho(x - 8, y - 10, { sentado: true, parado: true, pele: PELES[1], cabelo: CABELOS[1], camisa: "#4cc9f0", calca: "#3b4a7a", dir: 1, esc: 0.95 });
+      bonequinho(x + 9, y - 10, { sentado: true, parado: true, pele: PELES[0], cabelo: CABELOS[3], camisa: "#ff7aa8", calca: "#ff7aa8", dir: -1, esc: 0.95, saia: true, cabeludo: true });
+      coracao(ctx, x, y - 66 - Math.sin(tempo * 2) * 3, 9, "#ff4d88");
+    }
+  }
+
+  function carrinhoPipoca(x) {
+    const y = FASE.chao;
+    // guarda-sol listrado
+    for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? "#fff" : "#ff4d6d"; ctx.beginPath(); ctx.moveTo(x, y - 96); ctx.lineTo(x - 36 + k * 12, y - 70); ctx.lineTo(x - 24 + k * 12, y - 70); ctx.closePath(); ctx.fill(); }
+    ctx.strokeStyle = "#9a9aa8"; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(x, y - 96); ctx.lineTo(x, y - 30); ctx.stroke();
+    // carrinho
+    caminhoRetArred(ctx, x - 26, y - 44, 52, 32, 5); ctx.fillStyle = "#fff4d6"; ctx.fill();
+    ctx.fillStyle = "#ff4d6d"; ctx.fillRect(x - 26, y - 44, 52, 7);
+    caminhoRetArred(ctx, x - 20, y - 60, 40, 18, 6); ctx.fillStyle = "rgba(190,230,250,.8)"; ctx.fill();
+    ctx.fillStyle = "#fff6c8"; for (let k = 0; k < 9; k++) elipse(ctx, x - 16 + (k % 5) * 8, y - 48 - Math.floor(k / 5) * 6, 3.4, 3), ctx.fill();
+    ctx.fillStyle = "#2f2a36"; elipse(ctx, x - 14, y - 10, 6, 6); ctx.fill(); elipse(ctx, x + 14, y - 10, 6, 6); ctx.fill();
+    ctx.fillStyle = "#fff"; elipse(ctx, x - 14, y - 10, 2.4, 2.4); ctx.fill(); elipse(ctx, x + 14, y - 10, 2.4, 2.4); ctx.fill();
+    ctx.fillStyle = "#ff4d6d"; ctx.font = "700 8px Fredoka, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("PIPOCA", x, y - 24);
+    // vendedor e balões
+    bonequinho(x + 40, FASE.chao - 2, { dir: -1, parado: true, pele: PELES[2], cabelo: CABELOS[1], camisa: "#ffd23f", calca: "#2f3b55", chapeu: "#ff4d6d", esc: 0.95 });
+    const cores = ["#ff4d88", "#4cc9f0", "#ffd23f", "#7be08f", "#b48bff"];
+    for (let k = 0; k < 5; k++) {
+      const bx = x + 40 + (k - 2) * 7 + Math.sin(tempo * 1.4 + k) * 3, by = FASE.chao - 92 - (k % 2) * 8 + Math.sin(tempo * 1.7 + k) * 2;
+      ctx.strokeStyle = "rgba(60,60,80,.55)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x + 36, FASE.chao - 30); ctx.lineTo(bx, by + 9); ctx.stroke();
+      ctx.fillStyle = cores[k]; elipse(ctx, bx, by, 6.5, 8); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.55)"; elipse(ctx, bx - 2, by - 3, 1.8, 2.6); ctx.fill();
+    }
+  }
+
+  function arvoreIbira(x, esc) {
+    const y = FASE.chao;
+    ctx.fillStyle = "#7a5230"; ctx.beginPath(); ctx.moveTo(x - 6 * esc, y); ctx.lineTo(x - 4 * esc, y - 78 * esc); ctx.lineTo(x + 4 * esc, y - 78 * esc); ctx.lineTo(x + 6 * esc, y); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#7a5230"; ctx.lineWidth = 3.4 * esc; ctx.beginPath(); ctx.moveTo(x, y - 60 * esc); ctx.lineTo(x - 22 * esc, y - 86 * esc); ctx.moveTo(x, y - 66 * esc); ctx.lineTo(x + 24 * esc, y - 90 * esc); ctx.stroke();
+    for (const [dx, dy, r, c] of [[0, -118, 46, "#3f8f4a"], [-36, -96, 32, "#4a9c52"], [36, -98, 33, "#4a9c52"], [10, -140, 30, "#5cb461"], [-22, -130, 24, "#56ad5b"], [28, -126, 22, "#6cc26f"]]) {
+      ctx.fillStyle = c; elipse(ctx, x + dx * esc, y + dy * esc, r * esc, r * esc * 0.92); ctx.fill();
+    }
+    ctx.fillStyle = "rgba(255,255,255,.1)"; elipse(ctx, x - 14 * esc, y - 138 * esc, 18 * esc, 12 * esc); ctx.fill();
+  }
+
+  function posteParque(x) {
+    const y = FASE.chao;
+    ctx.fillStyle = "#3a3f4b"; ctx.fillRect(x - 2, y - 92, 4, 92); ctx.fillRect(x - 6, y - 4, 12, 4);
+    ctx.fillStyle = "#fff7c2"; caminhoRetArred(ctx, x - 8, y - 106, 16, 16, 6); ctx.fill();
+    ctx.strokeStyle = "#3a3f4b"; ctx.lineWidth = 2; ctx.strokeRect(x - 8, y - 106, 16, 16);
+  }
+
+  function floresParque(x, i) {
+    const y = FASE.chao, cores = ["#ff6fa5", "#ffd23f", "#fff", "#b48bff", "#ff8a3d"];
+    ctx.strokeStyle = "#4a9c3a"; ctx.lineWidth = 1.6;
+    for (let k = 0; k < 5; k++) {
+      const fx = x - 12 + k * 6 + rnd(i * 5 + k) * 3, h = 9 + rnd(i * 7 + k) * 8;
+      ctx.beginPath(); ctx.moveTo(fx, y + 1); ctx.lineTo(fx + Math.sin(tempo * 1.6 + k) * 1.5, y - h); ctx.stroke();
+      ctx.fillStyle = cores[(i + k) % 5]; elipse(ctx, fx + Math.sin(tempo * 1.6 + k) * 1.5, y - h - 2, 3.2, 3.2); ctx.fill();
+      ctx.fillStyle = "#ffe36a"; elipse(ctx, fx + Math.sin(tempo * 1.6 + k) * 1.5, y - h - 2, 1.1, 1.1); ctx.fill();
+    }
+  }
+
+
+  // ----- capivara de verdade (vista de lado, virada pra direita; dir inverte) -----
+  // o = { pose: "pastando" | "parada" | "deitada" | "andando", dir, esc, anim, t, i, passaro, olhando }
+  function capivaraReal(x, y, o) {
+    const e = o.esc || 1, dir = o.dir || 1, t = o.t || 0, a = o.anim || 0, i = o.i || 0;
+    const deit = o.pose === "deitada", past = o.pose === "pastando", anda = o.pose === "andando";
+    const resp = Math.sin(t * 1.7 + i * 2);
+    const swing = anda ? Math.sin(a) : 0;
+    const base = deit ? -9 : -15 - (anda ? Math.abs(swing) * 1.1 : 0);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(dir * e, e);
+    ctx.fillStyle = "rgba(0,0,0,.17)"; elipse(ctx, 0, 1, 42, 4); ctx.fill();
+    // pernas curtinhas e fortes
+    if (!deit) {
+      for (const [lx, sw, trasa] of [[-25, swing, true], [-15, -swing, true], [17, -swing, false], [27, swing, false]]) {
+        const lev = Math.max(0, sw) * 3.5, off = sw * 4;
+        ctx.fillStyle = trasa ? "#5a432f" : "#634a34";
+        caminhoRetArred(ctx, lx - 4 + off, -15 - lev, trasa ? 9 : 8, 15 + lev * 0.2, 3.4); ctx.fill();
+        ctx.fillStyle = "#3d2c1d"; caminhoRetArred(ctx, lx - 4.4 + off, -3.4 - lev, 9.6, 4, 2); ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = "#5a432f"; elipse(ctx, 22, -4, 9, 4.5); ctx.fill(); elipse(ctx, -22, -5, 10, 5); ctx.fill();
+    }
+    // corpo: barril marrom, garupa redonda e cernelha mais alta
+    ctx.save();
+    ctx.translate(0, 0);
+    ctx.scale(1, 1 + resp * 0.012);
+    const g = ctx.createLinearGradient(0, base - 28, 0, base + 8);
+    g.addColorStop(0, "#a07b52"); g.addColorStop(0.55, "#86643f"); g.addColorStop(1, "#6a4f33");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(0, base - 6, 38, 19, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(-22, base - 5, 18, 17, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(19, base - 9, 16, 17, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(200,170,120,.35)"; ctx.beginPath(); ctx.ellipse(4, base + 5, 27, 6, 0, 0, Math.PI * 2); ctx.fill();
+    // pelos
+    ctx.strokeStyle = "rgba(56,38,24,.38)"; ctx.lineWidth = 1; ctx.lineCap = "round";
+    for (let k = 0; k < 16; k++) {
+      const fx = -34 + k * 4.4, fy = base - 22 + (rnd(k + i * 9) * 20);
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx + 3, fy + 2.4 + rnd(k + 3) * 2); ctx.stroke();
+    }
+    ctx.restore();
+    // cabeça grande e quadradona
+    const ang = past ? 0.78 + Math.sin(t * 9 + i) * 0.05 : deit ? 0.05 : o.olhando ? -0.12 : (anda ? Math.sin(a * 2) * 0.04 : -0.02 + Math.sin(t * 0.8 + i) * 0.03);
+    ctx.save();
+    ctx.translate(27, base - 15 + (deit ? 3 : 0));
+    ctx.rotate(ang);
+    ctx.beginPath();
+    ctx.moveTo(-6, -8); ctx.quadraticCurveTo(0, -15, 13, -14); ctx.lineTo(27, -13); ctx.quadraticCurveTo(33, -12, 33, -5);
+    ctx.lineTo(32, 7); ctx.quadraticCurveTo(31, 12, 24, 12); ctx.lineTo(2, 12); ctx.quadraticCurveTo(-7, 11, -7, 3); ctx.closePath();
+    const gh = ctx.createLinearGradient(0, -14, 0, 12);
+    gh.addColorStop(0, "#8f6c47"); gh.addColorStop(1, "#7a5a3a");
+    ctx.fillStyle = gh; ctx.fill();
+    ctx.fillStyle = "rgba(190,158,112,.45)"; ctx.beginPath(); ctx.ellipse(25, 4, 9, 8, 0, 0, Math.PI * 2); ctx.fill();   // focinho mais clarinho
+    ctx.fillStyle = "#3a281b"; ctx.beginPath(); ctx.ellipse(29, -11, 3.2, 1.8, 0.2, 0, Math.PI * 2); ctx.fill();         // narina
+    ctx.strokeStyle = "#3a281b"; ctx.lineWidth = 1.3;
+    const mastiga = past ? Math.sin(t * 14 + i) * 1.4 : (anda ? 0 : Math.sin(t * 1.4 + i) * 0.3);
+    ctx.beginPath(); ctx.moveTo(32, 3); ctx.quadraticCurveTo(26, 6 + mastiga, 19, 5); ctx.stroke();
+    ctx.lineWidth = 0.8; ctx.strokeStyle = "rgba(40,28,18,.6)";
+    for (const dy of [0, 3]) { ctx.beginPath(); ctx.moveTo(30, 3 + dy * 0.6); ctx.lineTo(37, 1 + dy); ctx.stroke(); }
+    // olho
+    const pisca = ((t + i * 1.3) % 4.2) < 0.13;
+    if (pisca) { ctx.strokeStyle = "#2a1b10"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(8, -5); ctx.lineTo(13, -5); ctx.stroke(); }
+    else {
+      ctx.fillStyle = "#24160c"; ctx.beginPath(); ctx.ellipse(10.5, -5, 2.5, 2.7, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.ellipse(11.3, -6, 0.9, 0.9, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    // orelhinha redonda (que mexe de vez em quando)
+    const mexe = ((t + i * 2.1) % 5) < 0.4 || o.olhando ? Math.sin(t * 22) * 0.4 : 0;
+    ctx.save(); ctx.translate(0, -11); ctx.rotate(mexe);
+    ctx.fillStyle = "#765636"; ctx.beginPath(); ctx.ellipse(0, -1, 4.6, 5.4, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#c79b8a"; ctx.beginPath(); ctx.ellipse(0.4, -0.4, 2.2, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.restore();
+    // um passarinho pegando carona nas costas
+    if (o.passaro) {
+      const pb = Math.sin(t * 5) > 0.85 ? -2 : 0, px = -6, py = base - 27 + pb;
+      ctx.fillStyle = "#c98a3d"; elipse(ctx, px, py, 5, 3.8); ctx.fill();
+      ctx.fillStyle = "#f2d38a"; elipse(ctx, px + 1, py + 1.2, 3, 2); ctx.fill();
+      ctx.fillStyle = "#c98a3d"; elipse(ctx, px + 5, py - 2.6, 2.7, 2.6); ctx.fill();
+      ctx.fillStyle = "#ffa733"; ctx.beginPath(); ctx.moveTo(px + 7.4, py - 2.8); ctx.lineTo(px + 10.4, py - 2); ctx.lineTo(px + 7.4, py - 1.4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#2a1b10"; elipse(ctx, px + 5.6, py - 3, 0.7, 0.7); ctx.fill();
+      ctx.strokeStyle = "#8a5a22"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(px - 4, py); ctx.lineTo(px - 9, py - 2 + Math.sin(t * 3) * 1); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // a toalha xadrez do piquenique, com tudo em cima
+  function toalhaPiquenique(x) {
+    const y = FASE.chao, col = 14;
+    const larg = (dy) => 118 + (dy / 11) * 22; // a borda de trás é mais curta (perspectiva)
+    for (let r = 0; r < 2; r++) {
+      const dyA = r * 5.5, dyB = (r + 1) * 5.5, wA = larg(dyA), wB = larg(dyB);
+      for (let k = 0; k < col; k++) {
+        ctx.fillStyle = (k + r) % 2 ? "#fff" : "#ff6b81";
+        ctx.beginPath();
+        ctx.moveTo(x + (k / col - 0.5) * wA, y - 11 + dyA);
+        ctx.lineTo(x + ((k + 1) / col - 0.5) * wA, y - 11 + dyA);
+        ctx.lineTo(x + ((k + 1) / col - 0.5) * wB, y - 11 + dyB + 0.4);
+        ctx.lineTo(x + (k / col - 0.5) * wB, y - 11 + dyB + 0.4);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+    ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.fillRect(x - 70, y, 140, 2);
+  }
+
+  // cavalete com tela pintada (tipo: "lago" ou "kitty")
+  function cavaleteTela(x, tipo, esc) {
+    const y = FASE.chao - 8;
+    ctx.save(); ctx.translate(x, y); ctx.scale(esc, esc);
+    ctx.strokeStyle = "#8a5d37"; ctx.lineWidth = 3; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(-14, 0); ctx.lineTo(-6, -58); ctx.moveTo(14, 0); ctx.lineTo(6, -58); ctx.moveTo(0, 2); ctx.lineTo(0, -46); ctx.stroke();
+    ctx.fillStyle = "#8a5d37"; ctx.fillRect(-18, -22, 36, 3.4);
+    // tela
+    ctx.fillStyle = "#fffdf5"; ctx.fillRect(-19, -68, 38, 44);
+    ctx.strokeStyle = "#caa772"; ctx.lineWidth = 1.5; ctx.strokeRect(-19, -68, 38, 44);
+    ctx.save(); ctx.beginPath(); ctx.rect(-18, -67, 36, 42); ctx.clip();
+    if (tipo === "lago") {
+      const g = ctx.createLinearGradient(0, -67, 0, -42); g.addColorStop(0, "#9bd7f5"); g.addColorStop(1, "#ffe2b8");
+      ctx.fillStyle = g; ctx.fillRect(-18, -67, 36, 26);
+      ctx.fillStyle = "#ffd36a"; elipse(ctx, 8, -54, 5, 5); ctx.fill();
+      ctx.fillStyle = "#6fc7e8"; ctx.fillRect(-18, -43, 36, 18);
+      ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.fillRect(-12, -38, 12, 1.6); ctx.fillRect(2, -33, 10, 1.6);
+      ctx.fillStyle = "#4f9e55"; elipse(ctx, -9, -45, 9, 8); ctx.fill();
+    } else {
+      // retrato da Kitty (feito pelo Pedro!)
+      ctx.fillStyle = "#ffd9e8"; ctx.fillRect(-18, -67, 36, 42);
+      ctx.fillStyle = "#fff"; elipse(ctx, 0, -42, 13, 10.5); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-11, -48); ctx.lineTo(-10, -58); ctx.lineTo(-3, -51); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(11, -48); ctx.lineTo(10, -58); ctx.lineTo(3, -51); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "#555"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.ellipse(0, -42, 13, 10.5, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "#2a2a2a"; elipse(ctx, -5.5, -43, 1.3, 1.6); ctx.fill(); elipse(ctx, 5.5, -43, 1.3, 1.6); ctx.fill();
+      ctx.fillStyle = "#ffcf33"; elipse(ctx, 0, -40, 1.9, 1.3); ctx.fill();
+      ctx.strokeStyle = "#555"; ctx.lineWidth = 0.7;
+      for (const s of [-1, 1]) for (const dy of [-1.6, 1]) { ctx.beginPath(); ctx.moveTo(s * 9, -41 + dy); ctx.lineTo(s * 16, -41 + dy * 2.4); ctx.stroke(); }
+      ctx.fillStyle = "#e8174f"; elipse(ctx, 8, -52, 4.4, 3.4); ctx.fill(); elipse(ctx, 13.5, -50.5, 3.6, 2.8); ctx.fill(); elipse(ctx, 9.5, -49.8, 1.6, 1.6); ctx.fill();
+      coracao(ctx, -10, -32, 6, "#ff4d88");
+    }
+    ctx.restore();
+    ctx.restore();
+  }
+
+  // as coisas em cima da toalha: salgadinhos, suco, tintas, pincéis e lápis de cor
+  function coisasPiquenique(x) {
+    const y = FASE.chao - 4;
+    // cesta de vime com pão
+    caminhoRetArred(ctx, x - 58, y - 13, 24, 13, 4); ctx.fillStyle = "#c98f4f"; ctx.fill();
+    ctx.strokeStyle = "#a7703a"; ctx.lineWidth = 1; for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(x - 58 + k * 6, y - 13); ctx.lineTo(x - 58 + k * 6, y); ctx.stroke(); }
+    ctx.strokeStyle = "#a7703a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x - 46, y - 13, 9, Math.PI, 0); ctx.stroke();
+    ctx.fillStyle = "#e6b36a"; elipse(ctx, x - 52, y - 15, 6, 3); ctx.fill(); elipse(ctx, x - 42, y - 15, 5, 3); ctx.fill();
+    // prato de salgadinhos (coxinhas e pão de queijo)
+    ctx.fillStyle = "#fff"; elipse(ctx, x - 22, y - 1.5, 15, 3.4); ctx.fill();
+    ctx.fillStyle = "#e2a23c";
+    for (const [dx, dy] of [[-8, -6], [0, -8], [8, -6], [-4, -11], [4, -11]]) { ctx.beginPath(); ctx.moveTo(x - 22 + dx, y + dy - 6); ctx.quadraticCurveTo(x - 22 + dx + 5, y + dy + 1, x - 22 + dx, y + dy + 1); ctx.quadraticCurveTo(x - 22 + dx - 5, y + dy + 1, x - 22 + dx, y + dy - 6); ctx.fill(); }
+    ctx.fillStyle = "#f2c260"; for (const dx of [-10, 10]) { elipse(ctx, x - 22 + dx, y - 5, 3.2, 3); ctx.fill(); }
+    // pacote de salgadinho + jarra de suco com copos
+    caminhoRetArred(ctx, x + 6, y - 20, 13, 20, 2); ctx.fillStyle = "#ffcf33"; ctx.fill();
+    ctx.fillStyle = "#e8174f"; ctx.fillRect(x + 6, y - 14, 13, 6);
+    ctx.fillStyle = "#fff"; ctx.font = "700 5px Fredoka, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("CHIPS", x + 12.5, y - 11);
+    caminhoRetArred(ctx, x + 26, y - 20, 12, 20, 3); ctx.fillStyle = "rgba(255,150,60,.85)"; ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 1.2; ctx.stroke();
+    ctx.fillStyle = "#fff"; ctx.fillRect(x + 25, y - 23, 14, 3);
+    for (const dx of [44, 54]) { caminhoRetArred(ctx, x + dx, y - 9, 7, 9, 2); ctx.fillStyle = "rgba(255,170,80,.85)"; ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 1; ctx.stroke(); }
+    // paleta de tinta, pincéis no pote e lápis de cor
+    ctx.save(); ctx.translate(x + 70, y - 3);
+    ctx.fillStyle = "#e9c88f"; ctx.beginPath(); ctx.ellipse(0, -3, 12, 4.6, -0.1, 0, Math.PI * 2); ctx.fill();
+    [["#ff4d88", -7], ["#ffd23f", -2], ["#4cc9f0", 3], ["#7be08f", 8]].forEach(([c, dx]) => { ctx.fillStyle = c; elipse(ctx, dx, -4 - (Math.abs(dx) % 3) * 0.4, 2.3, 1.7); ctx.fill(); });
+    ctx.restore();
+  }
+
+  function pincelELapis(x) {
+    const y = FASE.chao - 4;
+    caminhoRetArred(ctx, x - 6, y - 12, 12, 12, 2); ctx.fillStyle = "#4cc9f0"; ctx.fill();
+    ctx.lineWidth = 2; ctx.lineCap = "round";
+    [["#8a5d37", -3, -26, "#ff4d88"], ["#8a5d37", 0, -29, "#ffd23f"], ["#8a5d37", 3, -25, "#7be08f"]].forEach(([c, dx, top, tinta], k) => {
+      ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(x + dx, y - 10); ctx.lineTo(x + dx + (k - 1) * 3, y + top + 12); ctx.stroke();
+      ctx.fillStyle = tinta; elipse(ctx, x + dx + (k - 1) * 3, y + top + 11, 1.8, 3); ctx.fill();
+    });
+    // caixinha de lápis de cor abertos
+    const bx = x + 22;
+    caminhoRetArred(ctx, bx, y - 6, 26, 6, 2); ctx.fillStyle = "#fff"; ctx.fill(); ctx.strokeStyle = "#ddd"; ctx.lineWidth = 1; ctx.stroke();
+    ["#ff4d88", "#ffd23f", "#4cc9f0", "#7be08f", "#b48bff", "#ff8a3d"].forEach((c, k) => {
+      ctx.fillStyle = c; ctx.save(); ctx.translate(bx + 3 + k * 4, y - 6); ctx.rotate(-0.25 + k * 0.1); ctx.fillRect(-1.4, -13, 2.8, 13);
+      ctx.beginPath(); ctx.moveTo(-1.4, -13); ctx.lineTo(0, -17); ctx.lineTo(1.4, -13); ctx.closePath(); ctx.fill(); ctx.restore();
+    });
+    // folhas de desenho
+    ctx.fillStyle = "#fffdf5"; ctx.fillRect(bx + 32, y - 2, 20, 2.4); ctx.fillStyle = "#ffe9f1"; ctx.fillRect(bx + 33, y - 4.4, 19, 2.4);
+  }
+
+  // tudo do piquenique (atrás do Pedro) e as capivaras em volta
+  function desenharPiquenique() {
+    const px = FASE.pedro.x;
+    if (px < cam.x - 260 || px > cam.x + viewW + 260) return;
+    const I = FASE.ibira;
+    // fundo: cavaletes e as capivaras que ficam mais atrás
+    cavaleteTela(px - 30, "lago", 0.95);
+    cavaleteTela(px + 14, "kitty", 0.95);
+    for (const C of I.capivaras) if (C.fundo) capivaraPiquenique(C);
+    toalhaPiquenique(px + 3);
+    coisasPiquenique(px - 8);
+    pincelELapis(px + 40);
+    for (const C of I.capivaras) if (!C.fundo) capivaraPiquenique(C);
+  }
+
+  function capivaraPiquenique(C) {
+    const emAbraco = estado === "abraco";
+    const t = tempo;
+    let x = C.x, dir = C.dir, pose = C.pose, y = FASE.chao - (C.fundo ? 9 : 2), anim = t * 5.5;
+    if (C.pose === "andando") {
+      const [d, dd] = pingPong(t * C.v, C.x1 - C.x0);
+      x = C.x0 + d; dir = dd; anim = t * 6;
+    }
+    // quando a Kitty chega perto, a que está pastando levanta a cabeça pra olhar
+    const perto = Math.abs(kitty.x - x) < 150;
+    let olhando = false;
+    if (pose === "pastando" && (perto || estado === "cena" || emAbraco)) { pose = "parada"; olhando = true; dir = kitty.x < x ? -1 : 1; }
+    if (C.pose === "deitada" && (estado === "cena" || emAbraco)) olhando = true;
+    capivaraReal(x, y, { pose, dir, esc: C.esc, anim, t, i: C.i, passaro: C.passaro, olhando });
+    // todo mundo feliz com o pedido: coraçõezinhos saindo das capivaras
+    if (emAbraco && C.i === 2 && Math.random() < 0.03) coracaoSubindo(x, FASE.chao - 52);
+  }
+
+  // tudo do parque que fica no mundo (atrás da Kitty)
+  function desenharParqueMundo() {
+    if (cam.x + viewW < FASE.ibira.inicio - 300) return;
+    const alfa = mistura6(cam.x + viewW / 2);
+    if (alfa < 0.04) return;
+    ctx.save();
+    ctx.globalAlpha = alfa;
+    const I = FASE.ibira, v = (x, m = 90) => x > cam.x - m && x < cam.x + viewW + m;
+    // árvores e canteiros, espalhados de forma estável pelo parque
+    for (let i = 0, x = I.inicio - 40; x < 13900; i++, x += 190 + rnd(i + 3) * 110) {
+      if (v(x, 100)) arvoreIbira(x, 0.9 + rnd(i + 9) * 0.35);
+    }
+    for (let i = 0, x = I.inicio + 40; x < 14100; i++, x += 120 + rnd(i + 21) * 90) if (v(x, 30)) floresParque(x, i);
+    for (let i = 0, x = I.inicio + 150; x < 13700; i++, x += 330) if (v(x, 20)) posteParque(x);
+    I.bancos.forEach((x, i) => { if (v(x, 40)) bancoParque(x, i); });
+    if (v(I.carrinho, 80)) carrinhoPipoca(I.carrinho);
+    desenharPiquenique();
+    for (const P of I.pessoas) {
+      const lo = P.x0 !== undefined ? P.x0 : P.x - 40, hi = P.x1 !== undefined ? P.x1 : P.x + 80;
+      if (hi > cam.x - 80 && lo < cam.x + viewW + 80) pessoaParque(P, tempo);
+    }
+    ctx.restore();
+  }
+
+  // a porta de saída do arcade (leva pro parque)
+  function desenharSaidaArcade() {
+    const x = FASE.saidaArcade.x, y = FASE.chao;
+    if (x < cam.x - 120 || x > cam.x + viewW + 120) return;
+    const alfa = 1 - mistura6(cam.x + viewW / 2);
+    if (alfa < 0.04) return;
+    ctx.save();
+    ctx.globalAlpha = alfa;
+    ctx.translate(x, y);
+    ctx.fillStyle = "#1a0f33"; ctx.fillRect(-60, -190, 120, 190);
+    ctx.fillStyle = "#2b1650"; ctx.fillRect(-60, -190, 120, 8);
+    // a luz do dia entrando pela porta
+    const ld = ctx.createLinearGradient(0, -134, 0, 0);
+    ld.addColorStop(0, "#bfe8ff"); ld.addColorStop(1, "#fff7c2");
+    ctx.beginPath(); ctx.moveTo(-36, 0); ctx.lineTo(-36, -100); ctx.quadraticCurveTo(-36, -134, 0, -134); ctx.quadraticCurveTo(36, -134, 36, -100); ctx.lineTo(36, 0); ctx.closePath();
+    ctx.fillStyle = ld; ctx.fill();
+    ctx.save(); ctx.clip();
+    ctx.fillStyle = "#7bc35d"; ctx.fillRect(-40, -22, 80, 24);          // gramado lá fora
+    ctx.fillStyle = "#4f9e55"; elipse(ctx, -14, -46, 20, 22); ctx.fill(); elipse(ctx, 16, -52, 18, 24); ctx.fill(); // árvores
+    ctx.restore();
+    ctx.lineCap = "round";
+    for (const [lw, al] of [[9, 0.14], [4.5, 0.3], [2, 1]]) {
+      ctx.globalAlpha = alfa * al; ctx.strokeStyle = "#7dff9a"; ctx.lineWidth = lw;
+      ctx.beginPath(); ctx.moveTo(-40, 0); ctx.lineTo(-40, -100); ctx.quadraticCurveTo(-40, -138, 0, -138); ctx.quadraticCurveTo(40, -138, 40, -100); ctx.lineTo(40, 0); ctx.stroke();
+    }
+    ctx.globalAlpha = alfa;
+    neonTexto("SAÍDA", 0, -162, 17, "#7dff9a");
+    ctx.fillStyle = "rgba(255,247,194,.28)"; ctx.beginPath(); ctx.moveTo(-36, 0); ctx.lineTo(36, 0); ctx.lineTo(70, 10); ctx.lineTo(-70, 10); ctx.closePath(); ctx.fill();
+    ctx.restore();
   }
 
   // ---------- chegada no carrinho de churros (fim desta fase) ----------
@@ -841,8 +1466,15 @@ const Jogo = (() => {
     const duracaoEscrita = Math.max(2.4, CONFIG.textoPlaca.length * 0.14);
     switch (c.estagio) {
       case "chegando":
-        if (!k.andando) mudarEstagio("tremendo");
+        if (!k.andando) mudarEstagio("levantando");
         break;
+      case "levantando": {
+        // ele estava sentado no piquenique: levanta num pulinho, todo sem jeito
+        if (c.te > 0.4) p.pose = "parado";
+        p.pulo = Math.sin(Math.PI * clamp01((c.te - 0.25) / 0.7)) * 14;
+        if (c.te > 1.1) { p.pulo = 0; mudarEstagio("tremendo"); }
+        break;
+      }
       case "tremendo":
         emitirCoracoes(dt, k, p);
         if (c.te > 1.4) mudarEstagio("largar");
@@ -934,8 +1566,11 @@ const Jogo = (() => {
   const mistura4 = (x) => clamp01((x - FASE.transicao4.ini) / (FASE.transicao4.fim - FASE.transicao4.ini)); // praça → corredor
   const mistura5 = (x) => clamp01((x - FASE.transicao5.ini) / (FASE.transicao5.fim - FASE.transicao5.ini)); // corredor → arcade
 
-  // qual cenário domina em cada ponto (0 hoje, 1 parque, 2 rua, 3 praça, 4 corredor, 5 arcade)
+  const mistura6 = (x) => clamp01((x - FASE.transicao6.ini) / (FASE.transicao6.fim - FASE.transicao6.ini)); // arcade → parque (final)
+
+  // qual cenário domina em cada ponto (0 hoje, 1 parque aquático, 2 rua, 3 praça, 4 corredor, 5 arcade, 6 parque final)
   function temaDe(cx) {
+    if (mistura6(cx) > 0.5) return 6;
     if (mistura5(cx) > 0.5) return 5;
     if (mistura4(cx) > 0.5) return 4;
     if (mistura3(cx) > 0.5) return 3;
@@ -1574,6 +2209,50 @@ const Jogo = (() => {
     fadeAte(0);
   }
 
+  // depois de ganhar a capivara: volta pro arcade, com a dica da saída
+  function sairDaGarra() {
+    fadeAte(1, () => {
+      estado = "jogando";
+      kitty.vx = 0; kitty.andando = false;
+      particulas.length = 0;
+      fadeAte(0, () => cb.onFala && cb.onFala(CONFIG.textoSaidaArcade));
+    });
+  }
+
+  // ---------- saída do arcade → parque ----------
+  const saida = { a: 1 };
+  function iniciarSaidaArcade() {
+    estado = "saindo";
+    entrada.esq = entrada.dir = false;
+    bufferPulo = 0;
+    Object.assign(kitty, { vx: 0, vy: 0, y: FASE.chao, noChao: true });
+    saida.a = 1;
+  }
+
+  function atualizarSaidaArcade(dt) {
+    const k = kitty, alvo = FASE.saidaArcade.x + 6;
+    k.andando = false;
+    if (k.x < alvo) {
+      k.x = Math.min(alvo, k.x + 150 * dt); k.dir = 1; k.andando = true; k.anim += dt * 12;
+    } else if (!fadeDir && fade < 1) {
+      saida.a = Math.max(0, saida.a - dt / 0.5);
+      if (saida.a <= 0) fadeAte(1, entrarNoParque);
+    }
+  }
+
+  function entrarNoParque() {
+    const k = kitty;
+    k.x = FASE.ibira.inicio; k.y = FASE.chao; k.vx = k.vy = 0; k.dir = 1; k.noChao = true; k.andando = false;
+    k.seguro = { x: k.x, y: k.y };
+    minX = FASE.ibira.inicio - 30;
+    segurandoChurros = false;
+    saida.a = 1;
+    cam.x = Math.max(0, Math.min(FASE.largura - viewW, k.x - viewW * 0.4));
+    particulas.length = 0;
+    estado = "jogando";
+    fadeAte(0, () => cb.onFala && cb.onFala(CONFIG.textoChegadaParque));
+  }
+
   function mensagemGarra(txt, seg = 1.5) { garra.msg = txt; garra.msgT = seg; }
 
   function atualizarGarra(dt) {
@@ -1633,7 +2312,7 @@ const Jogo = (() => {
           const G = geoGarra();
           coracaoSubindo(G.gx + Math.random() * G.gw, G.gy + G.gh * (0.4 + Math.random() * 0.5));
         }
-        if (g.t > 4.2 && !g.fim) { g.fim = true; cb.onFimFase && cb.onFimFase(); }
+        if (g.t > 4.2 && !g.fim) { g.fim = true; sairDaGarra(); }
         break;
     }
     if (g.caiu) { g.caiu.t += dt; }
@@ -1752,12 +2431,12 @@ const Jogo = (() => {
     const rampaAtiva = naRampa();
     const camX = rampaAtiva ? CAM_RAMPA : cam.x;
     const cxv = camX + viewW / 2;
-    const t = mistura(cxv), u = mistura2(cxv), v = mistura3(cxv), z = mistura4(cxv), a5 = mistura5(cxv);
+    const t = mistura(cxv), u = mistura2(cxv), v = mistura3(cxv), z = mistura4(cxv), a5 = mistura5(cxv), p6 = mistura6(cxv);
 
     if (estado === "garra") {
       cenaGarra();
     } else {
-      fundo(camX, t, u, v, z, a5);
+      fundo(camX, t, u, v, z, a5, p6);
       if (rampaAtiva) cenaRampa();
       else mundo(t);
     }
@@ -1772,7 +2451,7 @@ const Jogo = (() => {
 
   // painel "Coletáveis" no canto da tela: churros e capivara
   function desenharColetaveis() {
-    if (estado === "cena" || estado === "abraco" || CONFIG.pedidoAtivo) return;
+    if (estado === "cena" || estado === "abraco") return;
     const temC = chegadaFeita, temP = garraGanha;
     if (temC && !colet.vChurros) { colet.vChurros = true; colet.churros = tempo; }
     if (temP && !colet.vCapi) { colet.vCapi = true; colet.capi = tempo; }
@@ -1804,13 +2483,13 @@ const Jogo = (() => {
   // ---------- fundo (céu + camadas com parallax) ----------
   // t = parque aquático, u = rua do condomínio, v = praça do shopping, z = corredor do shopping, a = arcade
   // (cada um vai de 0 a 1 conforme a Kitty avança: é isso que faz a transição ser leve)
-  function fundo(camX, t, u, v, z, a) {
+  function fundo(camX, t, u, v, z, a, p = 0) {
     const chaoTela = FASE.chao - cam.y;
-    const T = (c0, c1, c2, c3, c4, c5) => mix(mix(mix(mix(mix(c0, c1, t), c2, u), c3, v), c4, z), c5, a);
+    const T = (c0, c1, c2, c3, c4, c5, c6 = c5) => mix(mix(mix(mix(mix(mix(c0, c1, t), c2, u), c3, v), c4, z), c5, a), c6, p);
 
     const ceu = ctx.createLinearGradient(0, 0, 0, viewH);
-    ceu.addColorStop(0, T("#ffd9ea", "#5fc3ff", "#ffd2a6", "#6f86d6", "#f6e9da", "#140a2a"));
-    ceu.addColorStop(1, T("#fff3f8", "#e6f8ff", "#fff0dc", "#ffcfa0", "#f6e9da", "#2b1650"));
+    ceu.addColorStop(0, T("#ffd9ea", "#5fc3ff", "#ffd2a6", "#6f86d6", "#f6e9da", "#140a2a", "#7cc8f5"));
+    ceu.addColorStop(1, T("#fff3f8", "#e6f8ff", "#fff0dc", "#ffcfa0", "#f6e9da", "#2b1650", "#eaf8ff"));
     ctx.fillStyle = ceu;
     ctx.fillRect(0, 0, viewW, viewH);
 
@@ -1872,14 +2551,15 @@ const Jogo = (() => {
     camadaShopping(camX, chaoTela, v * (1 - z));
     camadaCidade(camX, chaoTela, 1 - t);
     camadaInterior(camX, chaoTela, z * (1 - a));
-    camadaArcade(camX, chaoTela, a);
+    camadaArcade(camX, chaoTela, a * (1 - p));
+    camadaIbira(camX, chaoTela, p);
 
     // base (o "buraco"): rosa na cidade, piscina no parque, asfalto na rua, piso escuro no shopping
-    ctx.fillStyle = T("#ffd9e8", "#fff4e2", "#d8c6a6", "#c8b8a0", "#e8d4bf", "#2a1650");
+    ctx.fillStyle = T("#ffd9e8", "#fff4e2", "#d8c6a6", "#c8b8a0", "#e8d4bf", "#2a1650", "#8fd16f");
     ctx.fillRect(0, chaoTela, viewW, 12);
-    ctx.fillStyle = T("#f3a6c4", "#4cc9f0", "#9a8a6e", "#8f7f68", "#d9b36a", "#37e6ff");
+    ctx.fillStyle = T("#f3a6c4", "#4cc9f0", "#9a8a6e", "#8f7f68", "#d9b36a", "#37e6ff", "#e7d6b1");
     ctx.fillRect(0, chaoTela + 10, viewW, 3);
-    ctx.fillStyle = T("#e58db4", "#3fbfee", "#5f5750", "#5a5260", "#d9c3aa", "#1a0f33");
+    ctx.fillStyle = T("#e58db4", "#3fbfee", "#5f5750", "#5a5260", "#d9c3aa", "#1a0f33", "#6db85a");
     ctx.fillRect(0, chaoTela + 13, viewW, viewH - chaoTela);
     const ondas = t * (1 - u);
     if (ondas > 0.05) {
@@ -2784,6 +3464,7 @@ const Jogo = (() => {
     desenharEntradaShopping();
     desenharArcadeEntrada();
     desenharMaquinas();
+    desenharSaidaArcade();
 
     for (const fx of FASE.flores) if (visivel(fx, 20)) florzinha(fx, FASE.chao);
     for (const px of FASE.palmeiras) if (visivel(px) && sobreChao(px)) palma(px, FASE.chao + 2, 96, (rnd(px) - 0.5) * 24, 1);
@@ -2791,6 +3472,7 @@ const Jogo = (() => {
     for (const x of FASE.postes) if (visivel(x, 60) && sobreChao(x)) poste(x);
     for (const x of FASE.arvores) if (visivel(x, 60) && sobreChao(x)) arvoreRua(x);
     for (const x of FASE.arbustos) if (visivel(x, 40) && sobreChao(x)) arbusto(x);
+    desenharParqueMundo();
     for (let i = 0; i < FASE.postesFios.length; i++) {
       const px = FASE.postesFios[i], nx = FASE.postesFios[i + 1];
       const aparece = nx !== undefined ? (nx > cam.x - 80 && px < cam.x + viewW + 80) : visivel(px, 80);
@@ -2844,7 +3526,7 @@ const Jogo = (() => {
       desenharPlacaEscrita(ctx, { cx: placa.cx, cy: placa.cy, esc: placa.esc, flip: placa.flip, texto: CONFIG.textoPlaca });
     }
 
-    if (CONFIG.pedidoAtivo) desenharPedro(pedroY);
+    if (CONFIG.pedidoAtivo || (pedro.x > cam.x - 140 && pedro.x < cam.x + viewW + 140)) desenharPedro(pedroY);
     if (placa && estado === "cena" && cena.estagio === "escrevendo") {
       // a mão dele rabiscando na borda da placa (o texto fica do outro lado, escondido)
       const mx = placa.cx - 25 + Math.sin(tempo * 17) * 3.5;
@@ -2856,7 +3538,9 @@ const Jogo = (() => {
     // Kitty
     const e = estado === "abraco" ? "mostra" : cena.estagio;
     const emCena = estado === "cena" || estado === "abraco";
-    if (!(kitty.piscar > 0 && Math.floor(tempo * 14) % 2)) {
+    if (!(kitty.piscar > 0 && Math.floor(tempo * 14) % 2) && !(estado === "saindo" && saida.a <= 0.01)) {
+      ctx.save();
+      if (estado === "saindo") ctx.globalAlpha = saida.a;
       let pose = "parado";
       if (estado === "resgate") pose = "pulando";
       else if (estado === "chegada") pose = poseKittyChegada();
@@ -2868,6 +3552,7 @@ const Jogo = (() => {
         inclinacao: pose === "abraco" ? 0.15 : (emCena && e === "escrevendo" ? 0.14 : 0),
         piscando: piscadela(0), rosto: estado === "chegada" ? rostoKittyChegada() : estado === "resgate" ? (resgate.t < RES_C ? "susto" : "feliz") : (emCena && e === "mostra" ? "feliz" : "normal"), t: tempo,
       });
+      ctx.restore();
     }
     if (estado === "cena" && !kitty.andando) {
       const bob = Math.sin(tempo * 6) * 2;
@@ -2994,7 +3679,7 @@ const Jogo = (() => {
     } else if (emCena) {
       rosto = "timido";
       suor = 1;
-      if (e === "chegando" || e === "tremendo" || e === "largar") {
+      if (e === "chegando" || e === "levantando" || e === "tremendo" || e === "largar") {
         tremer = Math.sin(tempo * 34) * 1.8;
       } else if (e === "viraCostas") {
         // gira como uma cartinha: encolhe a frente e abre as costas
@@ -3030,7 +3715,7 @@ const Jogo = (() => {
     }
 
     desenharGato(ctx, {
-      tipo: "pedro", x: p.x + (emCena ? c.lean : 0), y, traje: "praia", dir, pose, sx, braco: false,
+      tipo: "pedro", x: p.x + (emCena ? c.lean : 0), y: y - (pose === "sentado" ? 3 : 0), traje: "dia", dir, pose, sx, braco: false,
       flores: p.flores && !abraco && !(emCena && (e === "viraCostas" || e === "escrevendo" || e === "viraFrente" || e === "levanta" || e === "mostra")),
       tremer, rosto, suor, olhar, t: tempo, anim: tempo * 10,
       inclinacao: abraco ? -0.15 : (emCena && e === "escrevendo" ? 0.12 : 0),
@@ -3067,6 +3752,7 @@ const Jogo = (() => {
   function plataforma(p) {
     if (p.x > cam.x + viewW + 20 || p.x + p.w < cam.x - 20) return;
     const cx = p.x + p.w / 2, th = temaDe(cx);
+    if (th === 6) return plataformaIbira(p);
     if (th === 5) return plataformaArcade(p);
     if (th === 4) return plataformaInterior(p);
     if (th === 3) return p.chao ? plataformaPraca(p) : plataformaRua(p);

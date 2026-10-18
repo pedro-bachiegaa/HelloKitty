@@ -9,7 +9,7 @@
 // (O pedido de namoro está GUARDADO: ligue com pedidoAtivo no config.js ou abra com ?final.)
 const FASE = {
   chao: 400,
-  largura: 11560,
+  largura: 14400,
   inicio: { x: 80 },
 
   // faixas onde o cenário vai trocando aos poucos
@@ -18,6 +18,7 @@ const FASE = {
   transicao3: { ini: 7000, fim: 7500 },   // rua → praça do shopping
   transicao4: { ini: 7950, fim: 8250 },   // praça → corredor do shopping
   transicao5: { ini: 10010, fim: 10310 },   // corredor → arcade
+  transicao6: { ini: 11580, fim: 11640 },   // arcade → parque (a Kitty sai pela porta; o cenário troca escondido pelo fade)
   portao: { x: 2250 },                    // entrada do parque: aqui eles vestem roupa de praia
   saidaParque: { x: 4330 },               // saída do parque: aqui voltam à roupa normal
   condominio: { x: 6620 },
@@ -46,6 +47,32 @@ const FASE = {
   //  zona = onde dá pra "pular pra jogar" na máquina da capivara
   arcade: { porta: 10160, maquinas: [10460, 10580, 10960, 11080], capivara: 10760, zona: { ini: 10690, fim: 10830 } },
 
+  // saída do arcade: a porta que leva ao parque (só dá pra sair depois de pegar a capivara)
+  saidaArcade: { x: 11400 },
+
+  // O PARQUE (fase final, inspirado no Ibirapuera): lago ao fundo, árvores, gente passeando e o piquenique
+  ibira: {
+    inicio: 11780,
+    // 3 capivaras em volta dos dois (reais, com movimento): pastando, deitada e passeando ao fundo
+    capivaras: [
+      { pose: "pastando", x: 13868, dir: 1, esc: 1, fundo: true, i: 1 },
+      { pose: "deitada", x: 14168, dir: -1, esc: 1.02, passaro: true, i: 2 },
+      { pose: "andando", x0: 14120, x1: 14340, v: 9, esc: 0.88, fundo: true, i: 3 },
+    ],
+    bancos: [11960, 12580, 13200],
+    carrinho: 12830,
+    pessoas: [
+      { tipo: "familia", x0: 11850, x1: 12320, v: 20, i: 1 },
+      { tipo: "ciclista", x0: 11780, x1: 13650, v: 85, i: 2 },
+      { tipo: "corredor", x0: 12380, x1: 12980, v: 62, i: 3 },
+      { tipo: "casal", x0: 12080, x1: 12520, v: 16, i: 4 },
+      { tipo: "cachorro", x0: 12980, x1: 13460, v: 24, i: 5 },
+      { tipo: "pipa", x: 12260, i: 6 },
+      { tipo: "pipa", x: 13340, i: 7 },
+      { tipo: "familia", x0: 13120, x1: 13660, v: 18, i: 8 },
+    ],
+  },
+
   plataformas: [
     // chão (com buracos entre os pedaços)
     { x: 0, y: 400, w: 700, h: 200, chao: true },
@@ -64,6 +91,7 @@ const FASE = {
     { x: 7250, y: 400, w: 850, h: 200, chao: true },    // praça do shopping (até 8100)
     { x: 8100, y: 400, w: 2060, h: 200, chao: true },   // corredor com lojas (até 10160)
     { x: 10160, y: 400, w: 1400, h: 200, chao: true },   // arcade (até 11560)
+    { x: 11700, y: 400, w: 2700, h: 200, chao: true },   // o parque (até 14400)
 
     // plataformas no ar
     { x: 900, y: 320, w: 100, h: 20 },
@@ -117,5 +145,5 @@ const FASE = {
   muros: [{ x0: 4380, x1: 6452 }, { x0: 7010, x1: 7400 }],   // um muro só, contínuo, até o portão
 
   // O PEDIDO (guardado): onde o Pedro espera. Hoje fica desligado (pedidoAtivo: false no config).
-  pedro: { x: 4150 },
+  pedro: { x: 14000 },   // o piquenique: o Pedro sentado na toalha, no fim do parque
 };
