@@ -9,7 +9,7 @@
 // (O pedido de namoro está GUARDADO: ligue com pedidoAtivo no config.js ou abra com ?final.)
 const FASE = {
   chao: 400,
-  largura: 11000,
+  largura: 11560,
   inicio: { x: 80 },
 
   // faixas onde o cenário vai trocando aos poucos
@@ -17,7 +17,7 @@ const FASE = {
   transicao2: { ini: 4150, fim: 4950 },   // parque aquático → rua do condomínio
   transicao3: { ini: 7000, fim: 7500 },   // rua → praça do shopping
   transicao4: { ini: 7950, fim: 8250 },   // praça → corredor do shopping
-  transicao5: { ini: 9450, fim: 9750 },   // corredor → arcade
+  transicao5: { ini: 10010, fim: 10310 },   // corredor → arcade
   portao: { x: 2250 },                    // entrada do parque: aqui eles vestem roupa de praia
   saidaParque: { x: 4330 },               // saída do parque: aqui voltam à roupa normal
   condominio: { x: 6620 },
@@ -37,12 +37,14 @@ const FASE = {
   lojas: [
     { tipo: "boutique", x: 8330, w: 470 },     // vestidos e saltos altos
     { tipo: "perfumaria", x: 8830, w: 270 },
-    { tipo: "joalheria", x: 9130, w: 270 },
+    { tipo: "joalheria", x: 9130, w: 270 },   // (é a loja Pavão, de bijuterias)
+    { tipo: "popeyes", x: 9430, w: 270 },
+    { tipo: "mc", x: 9730, w: 300 },          // McLanche Feliz em destaque
   ],
 
   // arcade: portão neon, máquinas de pegar ursinho e a da CAPIVARA (minigame)
   //  zona = onde dá pra "pular pra jogar" na máquina da capivara
-  arcade: { porta: 9600, maquinas: [9900, 10020, 10400, 10520], capivara: 10200, zona: { ini: 10130, fim: 10270 } },
+  arcade: { porta: 10160, maquinas: [10460, 10580, 10960, 11080], capivara: 10760, zona: { ini: 10690, fim: 10830 } },
 
   plataformas: [
     // chão (com buracos entre os pedaços)
@@ -60,8 +62,8 @@ const FASE = {
     // final da rua, praça, corredor e arcade (sem buracos; o piso muda de estilo em cada pedaço)
     { x: 6290, y: 400, w: 960, h: 200, chao: true },    // rua (até 7250)
     { x: 7250, y: 400, w: 850, h: 200, chao: true },    // praça do shopping (até 8100)
-    { x: 8100, y: 400, w: 1500, h: 200, chao: true },   // corredor com lojas (até 9600)
-    { x: 9600, y: 400, w: 1400, h: 200, chao: true },   // arcade (até 11000)
+    { x: 8100, y: 400, w: 2060, h: 200, chao: true },   // corredor com lojas (até 10160)
+    { x: 10160, y: 400, w: 1400, h: 200, chao: true },   // arcade (até 11560)
 
     // plataformas no ar
     { x: 900, y: 320, w: 100, h: 20 },

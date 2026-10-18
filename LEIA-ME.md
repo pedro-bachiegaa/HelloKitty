@@ -79,7 +79,7 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 
 ## Fase 3: o shopping e o arcade (nova)
 - Depois do churros (a Kitty segue com o churros na mão), a rua vira a **praça do shopping** ao entardecer, com estrelinhas, prédios ao longe e lojinhas. A **entrada de vidro** tem portas de correr que abrem quando ela chega perto.
-- O **corredor** tem teto com luminárias, pilastras douradas e lojas: **Boutique** (vestidos nos manequins e saltos altos), **Perfumaria** e **Joias**.
+- O **corredor** tem teto com luminárias, pilastras douradas e lojas: **Boutique** (vestidos nos manequins e saltos altos), **Miniso**, **Pavão**, **Popeyes** e **McDonald's** (com o McLanche Feliz + alface extra em destaque).
 - O **arcade** tem entrada neon, máquinas de pegar ursinho e a **máquina da capivara**, que brilha, solta corações e tem um balão chamando a atenção.
 - **Minigame:** perto da máquina da capivara, **pule** pra jogar. ◀ ▶ movem a garra e o botão de pulo desce e pega. Se a garra pega outra pelúcia, ela escorrega; se pega a capivara com o coração, ela vai pra calha, cresce no meio da tela e aparece a tela de fim.
 - Textos no config.js: `nomeShopping`, `textoMaquina`, `capivaraVista`, `dicaGarra`, `garraDica`, `garraQuase`, `garraEscorregou`, `garraGanhou`, `tituloFimFase`, `textoFimFase`.

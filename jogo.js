@@ -21,6 +21,7 @@ const Jogo = (() => {
   let chegadaFeita = false;      // a cena do churros só acontece uma vez
   let segurandoChurros = false;  // a Kitty anda com o churros na mão até o arcade
   let garraGanha = false;        // já pegou a capivara?
+  const colet = { churros: -99, capi: -99, vChurros: false, vCapi: false }; // quando cada coletável entrou no painel
   const cam = { x: 0, y: 0 };
   const particulas = [];
   const entrada = { esq: false, dir: false };
@@ -1168,62 +1169,161 @@ const Jogo = (() => {
 
   function lojaPerfumaria(w) {
     const H = ALT_LOJA;
-    ctx.fillStyle = "#f3c6d3"; ctx.fillRect(0, -H, w, H);
-    ctx.fillStyle = "#e79ab4"; ctx.fillRect(0, -H, w, 46);
-    ctx.fillStyle = "#fff"; ctx.font = "700 22px Fredoka, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("Perfumaria", w / 2, -H + 24);
+    ctx.fillStyle = "#e60012"; ctx.fillRect(0, -H, w, H);
+    ctx.fillStyle = "#b8000e"; ctx.fillRect(0, -H, w, 46);
+    // letreiro: sacolinha vermelha com a alça e o nome
+    caminhoRetArred(ctx, w / 2 - 6, -H + 6, 12, 8, 2); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = "#fff"; ctx.font = "700 24px Fredoka, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("MINISO", w / 2, -H + 30);
     const vx = 12, vy = -H + 58, vw = w - 90, vh = H - 58 - 14;
     ctx.fillStyle = "#fff6f8"; ctx.fillRect(vx, vy, vw, vh);
-    ctx.strokeStyle = "#e79ab4"; ctx.lineWidth = 3; ctx.strokeRect(vx, vy, vw, vh);
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.strokeRect(vx, vy, vw, vh);
     const cores = ["#ff8fb8", "#8fd3ff", "#ffd23f", "#b48bff", "#7be08f"];
+    // de tudo um pouco: pelúcias, canecas, potes e caixinhas
     for (let r = 0; r < 3; r++) {
       const sy = vy + 38 + r * 38;
       ctx.fillStyle = "#e6c1cc"; ctx.fillRect(vx + 4, sy, vw - 8, 3);
       for (let k = 0; k < 4; k++) {
-        const bx = vx + 14 + k * ((vw - 40) / 3), cor = cores[(r * 2 + k) % 5];
-        caminhoRetArred(ctx, bx, sy - 22, 14, 22, 4); ctx.fillStyle = cor; ctx.fill();
-        ctx.fillStyle = "#e6c46a"; ctx.fillRect(bx + 4, sy - 28, 6, 6);
-        ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fillRect(bx + 2, sy - 19, 3, 14);
+        const bx = vx + 20 + k * ((vw - 40) / 3), cor = cores[(r * 2 + k) % 5], tipo = (r * 3 + k * 2) % 4;
+        if (tipo === 0) { // pelúcia de ursinho
+          elipse(ctx, bx, sy - 9, 9, 9); ctx.fillStyle = cor; ctx.fill();
+          elipse(ctx, bx, sy - 22, 8, 7.5); ctx.fill();
+          elipse(ctx, bx - 6, sy - 28, 3, 3); ctx.fill(); elipse(ctx, bx + 6, sy - 28, 3, 3); ctx.fill();
+          ctx.fillStyle = "#4a2a3a"; elipse(ctx, bx - 3, sy - 22, 1.1, 1.1); ctx.fill(); elipse(ctx, bx + 3, sy - 22, 1.1, 1.1); ctx.fill();
+        } else if (tipo === 1) { // caneca
+          caminhoRetArred(ctx, bx - 7, sy - 15, 14, 15, 3); ctx.fillStyle = cor; ctx.fill();
+          ctx.strokeStyle = cor; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(bx + 8, sy - 8, 4, -1.4, 1.4); ctx.stroke();
+          coracao(ctx, bx, sy - 8, 6, "#fff");
+        } else if (tipo === 2) { // pote com tampa
+          caminhoRetArred(ctx, bx - 8, sy - 17, 16, 17, 4); ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.fill();
+          ctx.strokeStyle = cor; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.fillStyle = cor; ctx.fillRect(bx - 9, sy - 21, 18, 5);
+        } else { // caixinha de presente / coelhinho
+          elipse(ctx, bx, sy - 8, 8, 8); ctx.fillStyle = cor; ctx.fill();
+          elipse(ctx, bx - 3.5, sy - 22, 2.6, 8); ctx.fill(); elipse(ctx, bx + 3.5, sy - 22, 2.6, 8); ctx.fill();
+          ctx.fillStyle = "#4a2a3a"; elipse(ctx, bx - 3, sy - 10, 1, 1); ctx.fill(); elipse(ctx, bx + 3, sy - 10, 1, 1); ctx.fill();
+        }
       }
     }
     coracao(ctx, vx + vw / 2, vy + 24, 20, "#ff4d88");
-    portaVidro(w - 66, "#e79ab4", "rgba(255,200,215,.6)");
+    portaVidro(w - 66, "#fff", "rgba(255,180,190,.55)");
   }
 
-  function lojaJoalheria(w) {
+  // pena de pavão (emblema da loja)
+  function penaPavao(x, y, esc, ang) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(esc, esc);
+    ctx.strokeStyle = "#1f7a6b"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, 20); ctx.quadraticCurveTo(3, 4, 0, -12); ctx.stroke();
+    elipse(ctx, 0, -18, 9, 13); ctx.fillStyle = "#19a58c"; ctx.fill();
+    elipse(ctx, 0, -18, 6, 9.5); ctx.fillStyle = "#2b5fd6"; ctx.fill();
+    elipse(ctx, 0, -18, 3.2, 5.5); ctx.fillStyle = "#7df0e0"; ctx.fill();
+    ctx.restore();
+  }
+
+  function lojaJoalheria(w) { // Pavão: loja de bijuteria
     const H = ALT_LOJA;
-    ctx.fillStyle = "#1d2f5a"; ctx.fillRect(0, -H, w, H);
-    ctx.fillStyle = "#12204a"; ctx.fillRect(0, -H, w, 46);
-    ctx.fillStyle = "#e6c46a"; ctx.font = "600 34px Caveat, cursive"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText("Joias", w / 2, -H + 24);
+    ctx.fillStyle = "#0f5f63"; ctx.fillRect(0, -H, w, H);
+    ctx.fillStyle = "#0a4448"; ctx.fillRect(0, -H, w, 46);
+    ctx.fillStyle = "#7df0e0"; ctx.font = "600 30px Caveat, cursive"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("Pavão", w / 2 + 8, -H + 25);
+    penaPavao(w / 2 - 46, -H + 28, 0.8, -0.3);
     const vx = 12, vy = -H + 58, vw = w - 90, vh = H - 58 - 14;
-    ctx.fillStyle = "#241a30"; ctx.fillRect(vx, vy, vw, vh);
-    ctx.strokeStyle = "#e6c46a"; ctx.lineWidth = 3; ctx.strokeRect(vx, vy, vw, vh);
-    // colares
+    ctx.fillStyle = "#fdf7ec"; ctx.fillRect(vx, vy, vw, vh);
+    ctx.strokeStyle = "#7df0e0"; ctx.lineWidth = 3; ctx.strokeRect(vx, vy, vw, vh);
+    // varal de brincos
+    ctx.fillStyle = "#b98a3e"; ctx.fillRect(vx + 4, vy + 8, vw - 8, 3);
+    const cores = ["#ff4d88", "#2b5fd6", "#19a58c", "#ffd23f", "#b48bff", "#ff8a3d"];
+    for (let k = 0; k < 5; k++) {
+      const bx = vx + 14 + k * ((vw - 28) / 4), cor = cores[k % 6];
+      ctx.strokeStyle = "#b98a3e"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(bx, vy + 11); ctx.lineTo(bx, vy + 22); ctx.stroke();
+      elipse(ctx, bx, vy + 28, 5, 6); ctx.fillStyle = cor; ctx.fill();
+    }
+    // colares coloridos
     for (let k = 0; k < 2; k++) {
-      const cx = vx + vw * (0.28 + k * 0.44);
-      ctx.strokeStyle = "#e6c46a"; ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.arc(cx, vy + 14, 30, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
-      ctx.fillStyle = k ? "#ff4d88" : "#5bbcf5";
-      elipse(ctx, cx, vy + 14 + 30 * Math.sin(0.5 * Math.PI), 6, 8); ctx.fill();
-      ctx.fillStyle = "#fff";
-      for (let g = -3; g <= 3; g++) { const a = 0.5 * Math.PI + g * 0.16; elipse(ctx, cx + Math.cos(a) * 30, vy + 14 + Math.sin(a) * 30, 1.8, 1.8); ctx.fill(); }
+      const cx = vx + vw * (0.27 + k * 0.46), cy = vy + 44;
+      for (let g = 0; g <= 10; g++) {
+        const a = 0.12 * Math.PI + g * (0.76 * Math.PI / 10);
+        elipse(ctx, cx + Math.cos(a) * 30, cy + Math.sin(a) * 28, 3, 3);
+        ctx.fillStyle = cores[(g + k * 2) % 6]; ctx.fill();
+      }
     }
-    // anéis em almofadinhas
-    for (let k = 0; k < 3; k++) {
-      const rx = vx + 26 + k * ((vw - 52) / 2), ry = vy + vh - 18;
-      caminhoRetArred(ctx, rx - 14, ry, 28, 16, 5); ctx.fillStyle = "#5a2a6e"; ctx.fill();
-      ctx.strokeStyle = "#e6c46a"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(rx, ry - 2, 6, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = ["#7df0ff", "#ff4d88", "#fff"][k]; elipse(ctx, rx, ry - 9, 3.2, 3.2); ctx.fill();
+    // pulseiras empilhadas
+    for (let k = 0; k < 4; k++) {
+      const rx = vx + 22 + k * ((vw - 44) / 3), ry = vy + vh - 14;
+      ctx.strokeStyle = cores[(k * 2 + 1) % 6]; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.ellipse(rx, ry, 11, 5, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = cores[(k * 2 + 3) % 6]; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(rx, ry - 6, 10, 4.5, 0, 0, Math.PI * 2); ctx.stroke();
     }
-    // brilhinhos
-    ctx.fillStyle = "#fff";
-    for (let k = 0; k < 8; k++) {
-      const sx = vx + 10 + rnd(k + 7) * (vw - 20), sy = vy + 8 + rnd(k + 17) * (vh - 30), r = 2 + rnd(k + 27) * 2.6;
-      ctx.beginPath(); ctx.moveTo(sx, sy - r); ctx.lineTo(sx + r * 0.3, sy - r * 0.3); ctx.lineTo(sx + r, sy); ctx.lineTo(sx + r * 0.3, sy + r * 0.3);
-      ctx.lineTo(sx, sy + r); ctx.lineTo(sx - r * 0.3, sy + r * 0.3); ctx.lineTo(sx - r, sy); ctx.lineTo(sx - r * 0.3, sy - r * 0.3); ctx.closePath(); ctx.fill();
+    penaPavao(vx + vw - 14, vy + vh - 26, 0.7, 0.25);
+    portaVidro(w - 66, "#7df0e0", "rgba(20,110,110,.6)");
+  }
+
+  function lojaPopeyes(w) {
+    const H = ALT_LOJA;
+    ctx.fillStyle = "#f26a21"; ctx.fillRect(0, -H, w, H);
+    ctx.fillStyle = "#c8470c"; ctx.fillRect(0, -H, w, 46);
+    ctx.fillStyle = "#fff"; ctx.font = "700 23px Fredoka, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("POPEYES", w / 2, -H + 24);
+    const vx = 12, vy = -H + 58, vw = w - 90, vh = H - 58 - 14;
+    ctx.fillStyle = "#fff4e2"; ctx.fillRect(vx, vy, vw, vh);
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 3; ctx.strokeRect(vx, vy, vw, vh);
+    // balde de frango frito
+    const bx = vx + vw / 2, by = vy + vh - 6;
+    for (const [dx, dy, r] of [[-18, -52, 11], [0, -58, 12], [18, -52, 11], [-8, -64, 9], [10, -64, 9]]) {
+      elipse(ctx, bx + dx, by + dy, r, r * 0.85); ctx.fillStyle = "#d98a2b"; ctx.fill();
+      elipse(ctx, bx + dx - 2, by + dy - 2, r * 0.5, r * 0.4); ctx.fillStyle = "#f2b45a"; ctx.fill();
     }
-    portaVidro(w - 66, "#e6c46a", "rgba(40,60,110,.7)");
+    ctx.beginPath(); ctx.moveTo(bx - 28, by - 48); ctx.lineTo(bx + 28, by - 48); ctx.lineTo(bx + 22, by); ctx.lineTo(bx - 22, by); ctx.closePath();
+    ctx.fillStyle = "#e8431e"; ctx.fill();
+    ctx.fillStyle = "#fff"; for (let k = -1; k <= 1; k += 2) ctx.fillRect(bx + k * 9 - 4, by - 48, 8, 48);
+    coracao(ctx, bx, by - 24, 14, "#fff");
+    portaVidro(w - 66, "#fff", "rgba(255,190,140,.55)");
+  }
+
+  function lojaMc(w) { // McDonald's, com o McLanche Feliz (+ alface extra) em destaque
+    const H = ALT_LOJA;
+    ctx.fillStyle = "#da291c"; ctx.fillRect(0, -H, w, H);
+    ctx.fillStyle = "#a81e14"; ctx.fillRect(0, -H, w, 46);
+    // arcos dourados
+    ctx.strokeStyle = "#ffc72c"; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - 74, -H + 36); ctx.lineTo(w / 2 - 74, -H + 12); ctx.quadraticCurveTo(w / 2 - 66, -H + 2, w / 2 - 58, -H + 16); ctx.lineTo(w / 2 - 51, -H + 36);
+    ctx.moveTo(w / 2 - 51, -H + 36); ctx.lineTo(w / 2 - 44, -H + 16); ctx.quadraticCurveTo(w / 2 - 36, -H + 2, w / 2 - 36, -H + 12); ctx.lineTo(w / 2 - 36, -H + 36);
+    ctx.stroke();
+    ctx.fillStyle = "#fff"; ctx.font = "700 20px Fredoka, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.fillText("McDonald's", w / 2 - 24, -H + 24);
+    const vx = 12, vy = -H + 58, vw = w - 90, vh = H - 58 - 14;
+    ctx.fillStyle = "#fff6d6"; ctx.fillRect(vx, vy, vw, vh);
+    ctx.strokeStyle = "#ffc72c"; ctx.lineWidth = 3; ctx.strokeRect(vx, vy, vw, vh);
+    // faixa de destaque
+    caminhoRetArred(ctx, vx + 8, vy + 6, vw - 16, 24, 12); ctx.fillStyle = "#ffc72c"; ctx.fill();
+    ctx.fillStyle = "#a81e14"; ctx.font = "700 13px Fredoka, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("McLanche Feliz!", vx + vw / 2, vy + 19);
+    // caixinha do McLanche Feliz
+    const cx = vx + vw / 2 - 28, cy = vy + vh - 6;
+    ctx.strokeStyle = "#ffc72c"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(cx - 12, cy - 54); ctx.quadraticCurveTo(cx, cy - 76, cx + 12, cy - 54); ctx.stroke();
+    caminhoRetArred(ctx, cx - 22, cy - 56, 44, 56, 6); ctx.fillStyle = "#da291c"; ctx.fill();
+    ctx.fillStyle = "#ffc72c"; ctx.fillRect(cx - 22, cy - 56, 44, 7);
+    ctx.fillStyle = "#fff"; elipse(ctx, cx - 7, cy - 32, 2.4, 2.4); ctx.fill(); elipse(ctx, cx + 7, cy - 32, 2.4, 2.4); ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(cx, cy - 26, 9, 0.25, Math.PI - 0.25); ctx.stroke();
+    // lanchinho com alface extra
+    const hx = vx + vw / 2 + 34, hy = cy;
+    elipse(ctx, hx, hy - 6, 19, 6); ctx.fillStyle = "#e6a24a"; ctx.fill();
+    ctx.fillStyle = "#6b3a1e"; ctx.fillRect(hx - 18, hy - 15, 36, 8);
+    for (let k = 0; k < 3; k++) { // alface em abundância
+      ctx.beginPath(); ctx.moveTo(hx - 22, hy - 17);
+      for (let g = 0; g <= 8; g++) ctx.lineTo(hx - 22 + g * 5.5, hy - 17 - (g % 2 ? 0 : 5) - k * 3);
+      ctx.lineTo(hx + 22, hy - 15); ctx.lineTo(hx - 22, hy - 15); ctx.closePath();
+      ctx.fillStyle = ["#5cc34a", "#7ad862", "#3fa83a"][k]; ctx.fill();
+    }
+    elipse(ctx, hx, hy - 31, 19, 11); ctx.fillStyle = "#e6a24a"; ctx.fill();
+    ctx.fillStyle = "#fff6d6"; for (const dx of [-8, 0, 8]) { elipse(ctx, hx + dx, hy - 34, 1.4, 0.9); ctx.fill(); }
+    ctx.fillStyle = "#2a8a2a"; ctx.font = "700 9px Fredoka, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("+ ALFACE EXTRA", hx, hy + 2);
+    portaVidro(w - 66, "#ffc72c", "rgba(255,120,100,.5)");
   }
 
   function desenharLojas() {
@@ -1232,7 +1332,7 @@ const Jogo = (() => {
       const alfa = mistura4(cam.x + viewW / 2); // só aparecem enquanto ela entra no shopping
       if (alfa < 0.05) continue;
       ctx.globalAlpha = Math.min(1, alfa * 1.5);
-      const fn = l.tipo === "boutique" ? lojaBoutique : l.tipo === "perfumaria" ? lojaPerfumaria : lojaJoalheria;
+      const fn = { boutique: lojaBoutique, perfumaria: lojaPerfumaria, popeyes: lojaPopeyes, mc: lojaMc }[l.tipo] || lojaJoalheria;
       estatico("loja-" + l.tipo, l.x, FASE.chao, l.w, ALT_LOJA, () => fn(l.w));
       ctx.globalAlpha = 1;
     }
@@ -1662,10 +1762,43 @@ const Jogo = (() => {
       else mundo(t);
     }
 
+    desenharColetaveis();
+
     if (fade > 0) {
       ctx.fillStyle = `rgba(255,255,255,${fade})`;
       ctx.fillRect(0, 0, viewW, viewH);
     }
+  }
+
+  // painel "Coletáveis" no canto da tela: churros e capivara
+  function desenharColetaveis() {
+    if (estado === "cena" || estado === "abraco" || CONFIG.pedidoAtivo) return;
+    const temC = chegadaFeita, temP = garraGanha;
+    if (temC && !colet.vChurros) { colet.vChurros = true; colet.churros = tempo; }
+    if (temP && !colet.vCapi) { colet.vCapi = true; colet.capi = tempo; }
+    if (!temC) colet.vChurros = false;
+    if (!temP) colet.vCapi = false;
+    const x0 = 10, y0 = 10, W = 100, H = 56;
+    ctx.save();
+    caminhoRetArred(ctx, x0, y0, W, H, 14); ctx.fillStyle = "rgba(255,255,255,.82)"; ctx.fill();
+    ctx.strokeStyle = "#ffb3d1"; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = "#d6336c"; ctx.font = "600 10px Fredoka, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("Coletáveis", x0 + W / 2, y0 + 10);
+    [[temC, colet.churros, 0], [temP, colet.capi, 1]].forEach(([tem, t0, i]) => {
+      const cx = x0 + 27 + i * 46, cy = y0 + 34;
+      caminhoRetArred(ctx, cx - 18, cy - 17, 36, 34, 10);
+      ctx.fillStyle = tem ? "#fff0f6" : "rgba(214,51,108,.1)"; ctx.fill();
+      ctx.strokeStyle = tem ? "#ff7aa8" : "rgba(214,51,108,.3)"; ctx.lineWidth = 1.5; ctx.stroke();
+      if (tem) {
+        const q = Math.min(1, (tempo - t0) / 0.5), pop = 1 + (q < 1 ? Math.sin(q * Math.PI) * 0.5 : 0);
+        if (i === 0) desenharChurros(cx, cy, 0.6, 1, 1, 0.72 * pop);
+        else desenharCapivara(cx, cy + 15 * pop, 0.5 * pop, 0);
+      } else {
+        ctx.fillStyle = "rgba(214,51,108,.35)"; ctx.font = "700 16px Fredoka, sans-serif";
+        ctx.fillText("?", cx, cy + 1);
+      }
+    });
+    ctx.restore();
   }
 
   // ---------- fundo (céu + camadas com parallax) ----------
