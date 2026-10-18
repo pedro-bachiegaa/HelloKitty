@@ -1,0 +1,2 @@
+Coloque aqui as fotos: 1.jpg, 2.jpg ... 6.jpg
+(ou mude os caminhos em config.js)

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#ffd6e7" />
+  <title>Uma surpresa pra você 🎀</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="bg-hearts" aria-hidden="true"></div>
+
+  <!-- Abertura -->
+  <section id="tela-inicio" class="tela ativa">
+    <div class="card">
+      <div class="emoji-grande pulsar">🎀</div>
+      <p class="saudacao">Oi, <span data-cfg="nomeAmor"></span>!</p>
+      <p data-cfg="textoAbertura"></p>
+      <button class="btn" id="btn-comecar">Toque para começar 💗</button>
+    </div>
+  </section>
+
+  <!-- Jogo -->
+  <section id="tela-jogo" class="tela">
+    <div class="area-jogo">
+      <canvas id="jogo"></canvas>
+
+      <div class="hud">
+        <span id="contador">💗 0/0</span>
+        <button class="btn-icone" id="btn-som" aria-label="Ligar ou desligar música">🔊</button>
+      </div>
+
+      <div id="toast" class="escondido"></div>
+
+      <!-- Fim desta fase (o pedido está guardado pra última fase) -->
+      <div id="fim-fase" class="overlay escondido">
+        <div class="card">
+          <div class="emoji-grande pulsar">🧸</div>
+          <h1 id="fim-titulo"></h1>
+          <p id="fim-texto"></p>
+          <button class="btn" id="btn-recomecar"></button>
+        </div>
+      </div>
+
+      <!-- Cartão de memória -->
+      <div id="modal-memoria" class="overlay escondido">
+        <div class="card memoria">
+          <img id="memoria-foto" alt="" />
+          <h3 id="memoria-titulo"></h3>
+          <p id="memoria-texto"></p>
+          <button class="btn" id="btn-continuar">Continuar 💗</button>
+        </div>
+      </div>
+
+      <!-- Pergunta -->
+      <div id="pergunta" class="escondido">
+        <button class="btn btn-sim" id="btn-sim">Sim! 💖</button>
+        <button class="btn btn-nao" id="btn-nao">Não</button>
+      </div>
+
+      <!-- Final -->
+      <div id="final" class="escondido">
+        <div class="card">
+          <h1 data-cfg="tituloFinal"></h1>
+          <p class="carta" data-cfg="mensagemFinal"></p>
+          <p class="assinatura">— <span data-cfg="seuNome"></span></p>
+        </div>
+      </div>
+
+      <div id="olha" class="escondido">
+        <p data-cfg="textoOlhaPraMim"></p>
+      </div>
+    </div>
+
+    <div id="controles">
+      <div class="setas">
+        <button class="ctl" data-ctl="esq" aria-label="Esquerda">◀</button>
+        <button class="ctl" data-ctl="dir" aria-label="Direita">▶</button>
+      </div>
+      <button class="ctl ctl-pulo" data-ctl="pulo" aria-label="Pular">⤴</button>
+    </div>
+  </section>
+
+  <canvas id="confete" aria-hidden="true"></canvas>
+
+  <script src="config.js"></script>
+  <script src="personagens.js"></script>
+  <script src="fase.js"></script>
+  <script src="jogo.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
