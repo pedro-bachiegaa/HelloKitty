@@ -48,7 +48,7 @@ const CONFIG = {
   falaHeroi2: "Cuidado com os buracos! 🕷️",
 
   // ---------- Shopping e arcade ----------
-  nomeShopping: "Shopping Jau",
+  nomeShopping: "Shopping Taboão",
   textoMaquina: "CAPIVARA",
   capivaraVista: "Olha só... uma capivara segurando um coração! 🦫💖",
   dicaGarra: "Pule aqui pra jogar! ⤴",

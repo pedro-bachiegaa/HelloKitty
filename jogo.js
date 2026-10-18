@@ -1229,7 +1229,7 @@ const Jogo = (() => {
   function desenharLojas() {
     for (const l of FASE.lojas) {
       if (l.x + l.w < cam.x - 40 || l.x > cam.x + viewW + 40) continue;
-      const alfa = mistura4(l.x + l.w / 2);
+      const alfa = mistura4(cam.x + viewW / 2); // só aparecem enquanto ela entra no shopping
       if (alfa < 0.05) continue;
       ctx.globalAlpha = Math.min(1, alfa * 1.5);
       const fn = l.tipo === "boutique" ? lojaBoutique : l.tipo === "perfumaria" ? lojaPerfumaria : lojaJoalheria;
@@ -1269,7 +1269,8 @@ const Jogo = (() => {
 
   function desenharEntradaShopping() {
     const x = FASE.shopping.entrada, y = FASE.chao, W = 380, H = 252;
-    const alfa = mistura3(x);
+    const camC = cam.x + viewW / 2;
+    const alfa = mistura3(camC) * (1 - mistura4(camC)); // some quando ela entra no shopping
     if (alfa < 0.04) return;
     ctx.globalAlpha = Math.min(1, alfa * 1.4);
     estatico("entrada-shopping", x - W / 2, y, W, H, () => entradaShoppingFixa(W, H));
@@ -1337,8 +1338,6 @@ const Jogo = (() => {
     // letreiro neon
     neonTexto("URSINHOS", w / 2, -h + 26, 24, "#37e6ff");
     neonTexto("ARCADE", w / 2, -h + 46, 14, "#ff4fd8");
-    // capivarinha mascote na entrada
-    desenharCapivara(w / 2, -4, 1.05);
     // coração neon
     coracao(ctx, w / 2 + 52, -108, 22, "#ff4fd8");
     coracao(ctx, w / 2 + 52, -108, 14, "#ffd1f2");
@@ -1397,7 +1396,7 @@ const Jogo = (() => {
       const w = m.especial ? 104 : 78, h = m.especial ? 178 : 150;
       const x0 = m.x - w / 2;
       if (x0 + w < cam.x - 60 || x0 > cam.x + viewW + 60) continue;
-      const alfa = mistura5(m.x);
+      const alfa = Math.max(0, Math.min(1, (cam.x + viewW / 2 - (A.porta + 20)) / 160)); // só aparecem depois que ela passa da porta
       if (alfa < 0.04) continue;
       ctx.globalAlpha = Math.min(1, alfa * 1.4);
       const y = FASE.chao;
@@ -1770,7 +1769,7 @@ const Jogo = (() => {
     }
   }
 
-  // praça do shopping: prédios da cidade ao longe e lojinhas da praça
+  // praça do shopping: só os prédios da cidade ao fundo
   function camadaShopping(camX, chaoTela, alfa) {
     if (alfa <= 0.01) return;
     ctx.save();
@@ -1789,31 +1788,6 @@ const Jogo = (() => {
             ctx.fillStyle = rnd(i * 31 + linha * 7 + col * 3) > 0.6 ? "#ffe39a" : "rgba(40,40,90,.35)";
             ctx.fillRect(wx, wy, 7, 9);
           }
-        }
-      }
-    }
-    // lojinhas da praça
-    {
-      const passo = 250, off = camX * 0.35, ini = Math.floor(off / passo) - 1;
-      const cores = ["#f2d7c4", "#d8e2f2", "#f4e6a8", "#e3cbe8"], toldos = ["#d9503a", "#3a8dde", "#2fb86e", "#b48bff"], nomes = ["MODA", "CAFÉ", "LIVROS", "FLORES"];
-      for (let i = ini; i < ini + viewW / passo + 3; i++) {
-        const x = i * passo - off + 10, w = 214, h = 112, k = ((i % 4) + 4) % 4, topo = chaoTela - h;
-        ctx.fillStyle = cores[k];
-        ctx.fillRect(x, topo, w, h);
-        ctx.fillStyle = "#2a2f4a";
-        ctx.fillRect(x + 20, topo + 6, w - 40, 18);
-        ctx.fillStyle = "#fff3a8";
-        ctx.font = "700 11px Fredoka, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(nomes[k], x + w / 2, topo + 15);
-        ctx.fillStyle = "#7fb0c4";
-        ctx.fillRect(x + 14, topo + 40, w - 28, 54);
-        ctx.fillStyle = "rgba(255,255,255,.3)";
-        ctx.beginPath(); ctx.moveTo(x + 30, topo + 40); ctx.lineTo(x + 56, topo + 40); ctx.lineTo(x + 34, topo + 94); ctx.lineTo(x + 14, topo + 94); ctx.closePath(); ctx.fill();
-        for (let s = 0; s < 8; s++) {
-          ctx.fillStyle = s % 2 ? "#ffffff" : toldos[k];
-          ctx.fillRect(x + 8 + s * ((w - 16) / 8), topo + 28, (w - 16) / 8, 12);
         }
       }
     }

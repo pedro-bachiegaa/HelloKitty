@@ -85,9 +85,6 @@ const FASE = {
     { x: 5820, y: 335, w: 90, h: 24 },
     { x: 5960, y: 275, w: 100, h: 24 },
     { x: 6100, y: 335, w: 90, h: 24 },
-    // praça do shopping: canteiros
-    { x: 7330, y: 335, w: 80, h: 24 },
-    { x: 7460, y: 275, w: 80, h: 24 },
   ],
 
   // Corações (memórias), NA ORDEM da história. (Desligados por enquanto: mostrarCoracoes)
