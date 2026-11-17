@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#ffd6e7" />
+  <title>O quarto 🏠</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="quarto.css" />
+</head>
+<body>
+  <main id="app">
+    <header>
+      <h1 id="titulo"></h1>
+      <p id="dica"></p>
+      <p id="contador"></p>
+    </header>
+
+    <svg id="cena" viewBox="0 0 300 530" preserveAspectRatio="xMidYMid meet" aria-label="Quarto para decorar"></svg>
+
+    <div id="fim" class="escondido">
+      <div class="card">
+        <div class="emoji">🏠💖</div>
+        <h2 id="fim-titulo"></h2>
+        <p id="fim-texto"></p>
+        <button id="btn-comecar"></button>
+      </div>
+    </div>
+
+    <button id="btn-reiniciar" aria-label="Recomeçar">↺</button>
+    <div id="toast" class="escondido"></div>
+  </main>
+
+  <script src="quarto.js"></script>
+</body>
+</html>

@@ -94,3 +94,19 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 - O pedido é a cena de antes (ele se levanta sem jeito, escreve escondido na placa, vira e mostra), agora no piquenique. Depois do Sim: abraço, corações e a mensagem final.
 - Atalhos de ensaio: `?saida` (perto da porta do arcade), `?ibira` (já no parque) e `?final` (perto do piquenique).
 - As posições do piquenique e das capivaras ficam em `FASE.pedro` e `FASE.ibira.capivaras` (`fase.js`).
+
+## O quarto (protótipo novo, separado do jogo)
+- Abra `quarto.html` (ex.: `localhost:8766/quarto.html`). É uma tela nova, o jogo antigo não foi alterado.
+- Arraste cada adesivo da bandeja para o lugar dele no quarto. Acertou: encaixa. Errou: volta pra bandeja; depois de 3 erros o lugar certo pisca.
+- Quarto completo = tela "O quarto ficou perfeito!" com o botão "Começar a fase" (ainda é só um aviso, a fase ainda não existe).
+- O progresso fica salvo no navegador. O botão ↺ recomeça.
+- Tudo se edita no bloco `QUARTO` do topo do `quarto.js`: textos, itens, desenhos (SVG), posições (`cx`, `cy`) e ordem (`z`). Por enquanto é um quarto genérico rosa e amarelo, com 9 itens.
+- Ainda não tem o modo para dois celulares: esta versão é só um jogador.
+
+## A garra (protótipo de teste, uma garra só)
+- Abra `garra.html` (ex.: `localhost:8766/garra.html`). Com `?ele` aparece o conjunto de pelúcias dele (rato/urso); sem nada, o dela (gatinha/urso).
+- 60 segundos. Mova a garra deslizando o dedo na máquina, com ◀ ▶, ou com as setas; **PEGAR** (ou espaço) desce a garra.
+- Sorte 50/50: metade das vezes ela segura até a saída (ponto); na outra metade a pelúcia escorrega no caminho e volta pra pilha.
+- A capivara é rara e vale 3 pontos. Tudo (tempo, chance, pelúcias, pontos, textos) fica no bloco `GARRA` do topo do `garra.js`.
+- Pra usar imagens de referência: coloque PNGs com fundo transparente em `fotos/` e ponha `img: "fotos/arquivo.png"` na pelúcia.
+- Ainda falta: o placar do adversário e a conexão entre os dois celulares.

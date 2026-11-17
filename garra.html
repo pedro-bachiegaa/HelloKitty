@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#ffd6e7" />
+  <title>Garra 🧸</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="garra.css" />
+</head>
+<body>
+  <main id="app">
+    <header>
+      <span id="tempo">⏱ 60</span>
+      <span id="pontos">🧸 0</span>
+    </header>
+
+    <div id="palco"><canvas id="tela"></canvas></div>
+
+    <div id="controles">
+      <button class="ctl" id="btn-esq" aria-label="Esquerda">◀</button>
+      <button class="ctl pegar" id="btn-pegar">PEGAR</button>
+      <button class="ctl" id="btn-dir" aria-label="Direita">▶</button>
+    </div>
+
+    <div id="overlay">
+      <div class="card">
+        <div class="emoji" id="ov-emoji">🧸</div>
+        <h2 id="ov-titulo"></h2>
+        <p id="ov-texto"></p>
+        <button id="btn-comecar"></button>
+      </div>
+    </div>
+  </main>
+
+  <script src="garra.js"></script>
+</body>
+</html>
