@@ -1,4 +1,4 @@
-// Garra: versão de teste com UMA garra (um jogador). 60 segundos.
+﻿// Garra: versão de teste com UMA garra (um jogador). 60 segundos.
 // Edite só o bloco GARRA. A pilha é fixa: o que você pega NÃO volta a aparecer.
 const GARRA = {
   tempo: 60,             // segundos de jogo
@@ -454,7 +454,7 @@ const GARRA = {
     }
   }
   $("btn-comecar").addEventListener("click", () => {
-    if (venceu) location.href = "quarto.html?concluiu=" + GARRA.idAdesivo;
+    if (venceu) location.href = "index.html?concluiu=" + GARRA.idAdesivo;
     else comecar();
   });
 

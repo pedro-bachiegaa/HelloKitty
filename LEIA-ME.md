@@ -129,3 +129,8 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 - A chance de segurar agora muda **a cada tentativa**: depende do tipo do bichinho, da **mira** (bem centralizado segura mais) e de um pouco de sorte. Nada de padrão fixo.
 - A falha também varia: pode escorregar **logo ao levantar**, **no meio do caminho** ou **quase na saída** ("Tão perto! 😭").
 - Teste feito: o resultado de uma tentativa não influencia a próxima (a chance depois de acerto e depois de falha é praticamente a mesma).
+
+## Página principal (2026-11-18)
+- O jogo principal agora é o quarto de adesivos: `index.html` (antes `quarto.html`). Endereço raiz do site abre ele.
+- O jogo antigo da Hello Kitty foi guardado em `kitty.html` (endereço `/kitty`). Parâmetros antigos continuam, ex.: `kitty.html?final`.
+- Onde esta documentação diz `quarto.html`, leia `index.html`; onde diz `index.html` (jogo da Kitty), leia `kitty.html`.
