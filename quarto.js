@@ -13,7 +13,7 @@ const QUARTO = {
   errosAteDica: 3,       // depois de tantos erros o lugar certo pisca
   chaveSalvar: "quarto-progresso",
   // Ordem em que os adesivos aparecem (um por vez). O próximo só libera depois de vencer a fase do anterior.
-  ordem: ["capivara", "quadro", "cama", "janela", "poema", "estante", "luminaria", "planta", "tapete"],
+  ordem: [["capivara", "quadro"], "cama", "janela", "poema", "estante", "luminaria", "planta", "tapete"],
   // Fases já criadas: id do adesivo -> página da fase. Adesivo sem fase conta como concluído na hora.
   fases: { capivara: "garra.html?quarto", quadro: "quadro.html?quarto" },
   faseTitulo: "Hora da fase! 🧸",
@@ -126,11 +126,16 @@ const QUARTO = {
   if (volta && !concluidas.includes(volta)) concluidas.push(volta);
   const pausa = new URLSearchParams(location.search).has("pausa"); // saiu da fase sem terminar
   if (volta || pausa) history.replaceState(null, "", location.pathname);
-  const ordenados = QUARTO.ordem.map((id) => itens.find((i) => i.d.id === id)).filter(Boolean);
+  // QUARTO.ordem: cada entrada é um id ou uma lista de ids que ficam disponíveis juntos
+  const grupos = QUARTO.ordem.map((g) => [].concat(g).map((id) => itens.find((i) => i.d.id === id)).filter(Boolean)).filter((g) => g.length);
+  const ordenados = grupos.flat();
 
-  // o adesivo da vez fica sozinho no meio da bandeja
+  // os adesivos da vez ficam lado a lado no meio da bandeja
+  grupos.forEach((g) => g.forEach((it, k) => {
+    it.slot = { x: 150 + (k - (g.length - 1) / 2) * 100, y: 468, s: Math.min(1.4, 90 / it.d.w, 70 / it.d.h) };
+  }));
   itens.forEach((it) => {
-    it.slot = { x: 150, y: 468, s: Math.min(1.4, 90 / it.d.w, 70 / it.d.h) };
+    if (!it.slot.x) it.slot = { x: 150, y: 468, s: Math.min(1.4, 90 / it.d.w, 70 / it.d.h) };
     it.g = el("g", { class: "item" }, camadaBandeja);
     it.g.innerHTML = it.d.svg;
     it.g.dataset.id = it.d.id;
@@ -259,8 +264,8 @@ const QUARTO = {
 
   // mostra só o adesivo da vez na bandeja; o resto espera a fase anterior ser vencida
   function atualizar() {
-    const vez = ordenados.find((i) => !concluidas.includes(i.d.id));
-    itens.forEach((it) => { it.g.style.display = it.estado === "travado" || it === vez ? "" : "none"; });
+    const vez = grupos.find((g) => g.some((i) => !concluidas.includes(i.d.id)));
+    itens.forEach((it) => { it.g.style.display = it.estado === "travado" || (vez && vez.includes(it)) ? "" : "none"; });
     $("contador").textContent = `🧸 ${concluidas.length}/${itens.length}`;
     if (!vez) setTimeout(() => $("fim").classList.remove("escondido"), 700);
   }

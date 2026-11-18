@@ -150,3 +150,7 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 - No quarto, a janela da fase tem **Agora não**, que fecha o aviso. Tocar num adesivo já colado com fase pendente reabre a fase.
 - Nova ordem dos adesivos: capivara, **quadro**, cama, janela, poema... (o quadro é o segundo, logo depois da capivara). Mude em `QUARTO.ordem` no `quarto.js`.
 - Ao mudar CSS/JS, aumente o `?v=` nos HTMLs pra o celular não usar cache velho (agora em `?v=5`/`?v=6`).
+
+## Adesivos juntos na bandeja (2026-11-18)
+- Capivara e quadro agora aparecem **lado a lado** na bandeja desde o começo; cada um abre a sua fase quando colado. Os outros adesivos seguem um por vez.
+- Em `QUARTO.ordem` (quarto.js), uma entrada pode ser um id ou uma lista de ids que ficam disponíveis juntos, ex.: `[["capivara","quadro"],"cama","janela",...]`.
