@@ -134,3 +134,8 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 - O jogo principal agora é o quarto de adesivos: `index.html` (antes `quarto.html`). Endereço raiz do site abre ele.
 - O jogo antigo da Hello Kitty foi guardado em `kitty.html` (endereço `/kitty`). Parâmetros antigos continuam, ex.: `kitty.html?final`.
 - Onde esta documentação diz `quarto.html`, leia `index.html`; onde diz `index.html` (jogo da Kitty), leia `kitty.html`.
+
+## Fase do quadro (2026-11-18)
+- `quadro.html` / `quadro.css` / `quadro.js`: pintura por números. As cores têm número e precisam ser usadas na ordem (1, 2, 3...). Tocar numa parte de outra cor avisa e balança; depois de 3 erros as partes certas piscam.
+- Está ligada ao adesivo do quadro no quarto (`QUARTO.fases.quadro`). Pra testar direto: `quadro.html?quarto`.
+- O desenho atual é um parque genérico. Pra usar os quadros que vocês pintaram: no bloco `QUADRO` do `quadro.js`, troque `paleta` (nome, cor e número, na ordem) e `formas` (cada região do desenho, com a cor n dela). Com a foto do quadro dá pra montar essas regiões.

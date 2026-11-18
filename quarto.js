@@ -15,7 +15,7 @@ const QUARTO = {
   // Ordem em que os adesivos aparecem (um por vez). O próximo só libera depois de vencer a fase do anterior.
   ordem: ["capivara", "cama", "janela", "quadro", "poema", "estante", "luminaria", "planta", "tapete"],
   // Fases já criadas: id do adesivo -> página da fase. Adesivo sem fase conta como concluído na hora.
-  fases: { capivara: "garra.html?quarto" },
+  fases: { capivara: "garra.html?quarto", quadro: "quadro.html?quarto" },
   faseTitulo: "Hora da fase! 🧸",
   faseTexto: "Você colou: ",
   faseBotao: "Jogar",
