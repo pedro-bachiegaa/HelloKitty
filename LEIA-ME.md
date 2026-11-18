@@ -139,3 +139,8 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 - `quadro.html` / `quadro.css` / `quadro.js`: pintura por números. As cores têm número e precisam ser usadas na ordem (1, 2, 3...). Tocar numa parte de outra cor avisa e balança; depois de 3 erros as partes certas piscam.
 - Está ligada ao adesivo do quadro no quarto (`QUARTO.fases.quadro`). Pra testar direto: `quadro.html?quarto`.
 - O desenho atual é um parque genérico. Pra usar os quadros que vocês pintaram: no bloco `QUADRO` do `quadro.js`, troque `paleta` (nome, cor e número, na ordem) e `formas` (cada região do desenho, com a cor n dela). Com a foto do quadro dá pra montar essas regiões.
+
+## Quadro com as pinturas reais (2026-11-18)
+- A fase do quadro agora tem **dois quadros em sequência**, baseados nos que vocês pintaram: as carpas com lótus (7 cores) e a casa do "Up" com balões (8 cores). Terminando o segundo, libera o adesivo no quarto.
+- Os desenhos são aproximações em formas simples (tela 300x300), no bloco `QUADRO.quadros` do `quadro.js`. Cada quadro tem `paleta` (cores na ordem de pintura) e `formas` (regiões, cada uma com sua cor `n`).
+- Dá pra refinar: mudar a ordem das cores, os tons, ou o formato das regiões. Quanto mais fiel a forma ao quadro, mais bonito fica ao pintar.

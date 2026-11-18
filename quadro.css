@@ -32,8 +32,8 @@ header h1 { font-size: 1.25rem; color: var(--rosa-escuro); }
   display: flex; align-items: center; justify-content: center;
 }
 #tela {
-  display: block; aspect-ratio: 300 / 360; height: auto;
-  width: min(100%, calc((100dvh - 190px) * 300 / 360));
+  display: block; aspect-ratio: 1; height: auto;
+  width: min(100%, calc(100dvh - 240px));
   background: #fff;
   border: 10px solid #f7d7a8; border-radius: 8px;
   box-shadow: 0 0 0 3px #e2b676, 0 12px 28px rgba(214, 51, 108, .25), inset 0 0 0 2px rgba(0, 0, 0, .08);
@@ -43,7 +43,8 @@ header h1 { font-size: 1.25rem; color: var(--rosa-escuro); }
 
 .forma { fill: #ececf1; stroke: #fff; stroke-width: 1.5; cursor: pointer; transition: fill .35s ease; }
 .forma.pintada { cursor: default; stroke: rgba(255, 255, 255, .55); }
-.forma.balanca { animation: balanca .35s; }
+.forma.balanca { animation: tremer .35s; }
+@keyframes tremer { 25%, 75% { opacity: .35; } }
 .forma.dica { animation: piscar .8s ease-in-out 4; }
 @keyframes balanca { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
 @keyframes piscar { 50% { fill: #ffd96b; } }
@@ -53,7 +54,7 @@ header h1 { font-size: 1.25rem; color: var(--rosa-escuro); }
 /* paleta */
 #paleta { flex: none; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; width: 100%; max-width: 440px; }
 .cor {
-  position: relative; width: 48px; height: 48px; border-radius: 50%;
+  position: relative; width: 42px; height: 42px; border-radius: 50%;
   border: 3px solid #fff; font: 700 1.1rem Fredoka, sans-serif; color: #4a1f33;
   box-shadow: 0 3px 8px rgba(214, 51, 108, .25); display: flex; align-items: center; justify-content: center;
   transition: transform .2s;
