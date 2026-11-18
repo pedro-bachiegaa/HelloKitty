@@ -1,4 +1,4 @@
-// Garra: versão de teste com UMA garra (um jogador). 60 segundos.
+﻿// Garra: versão de teste com UMA garra (um jogador). 60 segundos.
 // Edite só o bloco GARRA. A pilha é fixa: o que você pega NÃO volta a aparecer.
 const GARRA = {
   tempo: 60,             // segundos de jogo
@@ -19,21 +19,6 @@ const GARRA = {
     quaseSaida: "Tão perto! 😭",
     nada: "Errou! 😅",
     vazio: "Acabaram os bichinhos! 🎉",
-    // duelo (dois celulares)
-    loTitulo: "Garra a dois 🧸",
-    loTexto: "Cada uma na sua máquina, 60 segundos. Quem pegar mais pontos vence!\nUma cria a sala e passa o código; a outra digita.",
-    loAguardando: "Passe este código pra ela e espere:",
-    loEntrando: "Entrando na sala…",
-    loSemNet: "Não consegui conectar. Confira a internet e tente de novo.",
-    loNaoAchou: "Não achei essa sala. Confira o código.",
-    loCaiu: "A conexão caiu. 😕",
-    loPronto: "Conectado! 🎉",
-    esperando: "Esperando ela terminar…",
-    duelVenceu: "Você venceu! 🏆",
-    duelPerdeu: "Ela venceu desta vez! 😆",
-    duelEmpate: "Empate! 🤝",
-    revanche: "Revanche 🔁",
-    revancheEsp: "Esperando ela… ⏳",
   },
   // Os bichinhos da máquina. "qtd" = quantos tem na pilha (não repõe).
   // "chance" = chance de a garra segurar até a saída (os grandes/escorregadios seguram menos).
@@ -69,9 +54,6 @@ const GARRA = {
 
   // ---------- estado ----------
   let tempo = 0, jogando = false, restante = GARRA.tempo, pontos = 0;
-  let contagem = 0, encerrando = false, pontosEnviados = -1;
-  // duelo = null (treino sozinho) ou { host, meuFim, outroFim, outroPts, meuRev, outroRev }
-  let duelo = null;
   let pilha = [];            // pelúcias paradas na máquina
   const quedas = [];         // caindo na saída
   const textos = [];
@@ -168,14 +150,11 @@ const GARRA = {
   // ---------- atualização ----------
   function atualizar(dt) {
     tempo += dt;
-    if (contagem > 0) { contagem -= dt; if (contagem <= 0) { contagem = 0; jogando = true; } }
     if (jogando) {
       restante -= dt;
-      if (restante <= 0) { restante = 0; jogando = false; encerrando = true; }
-      else if (!pilha.length && !g.carga && !quedas.length) { jogando = false; encerrando = true; }
+      if (restante <= 0) { restante = 0; terminar(); }
+      else if (!pilha.length && !g.carga && !quedas.length) terminar();
     }
-    // o fim só vale quando a garra terminou o que estava fazendo (assim o último bichinho ainda conta)
-    if (encerrando && g.estado === "idle" && !g.carga && !quedas.length) { encerrando = false; terminar(); }
     atualizarGarra(dt);
     for (const p of pilha) {
       if (p.y < p.ty) { p.vy += 900 * dt; p.y = Math.min(p.ty, p.y + p.vy * dt); if (p.y >= p.ty) p.vy = 0; }
@@ -194,7 +173,6 @@ const GARRA = {
     $("tempo").textContent = "⏱ " + Math.ceil(restante);
     $("tempo").classList.toggle("urgente", jogando && restante <= 10);
     $("pontos").textContent = "🧸 " + pontos;
-    if (duelo && pontos !== pontosEnviados) { pontosEnviados = pontos; Rede.enviar({ t: "pts", p: pontos }); }
   }
 
   function atualizarGarra(dt) {
@@ -412,14 +390,6 @@ const GARRA = {
       ctx.strokeText(t.txt, t.x, t.y - t.t * 30); ctx.fillText(t.txt, t.x, t.y - t.t * 30);
     }
     ctx.globalAlpha = 1;
-    if (contagem > 0) {
-      const n = Math.ceil(contagem), f = contagem - Math.floor(contagem);
-      ctx.save(); ctx.translate(W / 2, GY + GH / 2); ctx.scale(1 + f * 0.35, 1 + f * 0.35);
-      ctx.globalAlpha = 0.35 + f * 0.65; ctx.font = "700 90px Fredoka, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillStyle = "#fff"; ctx.strokeStyle = "#d6336c"; ctx.lineWidth = 8;
-      ctx.strokeText(n, 0, 0); ctx.fillText(n, 0, 0);
-      ctx.restore();
-    }
   }
 
   // ---------- controles ----------
@@ -453,41 +423,26 @@ const GARRA = {
   });
 
   // ---------- início e fim ----------
-  const modoQuarto = location.search.includes("quarto");
-  let venceu = false; // true = o botão principal leva de volta ao quarto
-
   function mostrar(emoji, titulo, texto, botaoTxt) {
     $("ov-emoji").textContent = emoji; $("ov-titulo").textContent = titulo;
-    $("ov-texto").textContent = texto; $("btn-comecar").textContent = botaoTxt || "";
-    $("btn-comecar").classList.toggle("escondido", !botaoTxt);
-    $("btn-revanche").classList.add("escondido");
+    $("ov-texto").textContent = texto; $("btn-comecar").textContent = botaoTxt;
     $("overlay").classList.remove("escondido");
   }
   function comecar() {
-    pontos = 0; pontosEnviados = -1; restante = GARRA.tempo; quedas.length = 0; textos.length = 0;
-    encerrando = false; venceu = false;
+    pontos = 0; restante = GARRA.tempo; quedas.length = 0; textos.length = 0;
     Object.assign(g, { x: X_INICIO, y: REPOUSO_Y, estado: "idle", abertura: 1, carga: null });
     pilha = criarPilha();
-    if (duelo) {
-      Object.assign(duelo, { meuFim: false, outroFim: false, outroPts: 0, meuRev: false, outroRev: false });
-      jogando = false; contagem = 3;
-      $("adv").textContent = "🎀 0"; $("adv").classList.remove("escondido");
-    } else {
-      jogando = true; contagem = 0;
-      $("adv").classList.add("escondido");
-    }
+    jogando = true;
     $("overlay").classList.add("escondido");
-    $("lobby").classList.add("escondido");
   }
 
-  // ----- fim de jogo -----
+  // Modo quarto (?quarto): vence quem bate a meta; vencendo, volta pro quarto e libera o próximo adesivo.
+  // (Quando o adversário existir, a meta vira "pegar mais que ele".)
+  const modoQuarto = location.search.includes("quarto");
+  let venceu = false;
   function terminar() {
-    if (duelo) {
-      duelo.meuFim = true;
-      Rede.enviar({ t: "fim", p: pontos });
-      resolverDuelo();
-      return;
-    }
+    if (!jogando) return;
+    jogando = false;
     const txt = `Você pegou ${pontos} ${pontos === 1 ? "ponto" : "pontos"}!`;
     if (modoQuarto && pontos >= GARRA.metaQuarto) {
       venceu = true;
@@ -498,111 +453,13 @@ const GARRA = {
       mostrar("🏆", GARRA.textos.fim, txt, GARRA.textos.fimBotao);
     }
   }
-
-  // ----- duelo: resultado, revanche -----
-  function resolverDuelo() {
-    if (!duelo || !duelo.meuFim) return;
-    const eu = pontos, ela = duelo.outroPts, T = GARRA.textos;
-    if (!duelo.outroFim) { mostrar("⏳", T.esperando, `Você ${eu}  ×  ${ela} Ela`, ""); return; }
-    const emoji = eu > ela ? "🏆" : eu < ela ? "🎀" : "🤝";
-    const titulo = eu > ela ? T.duelVenceu : eu < ela ? T.duelPerdeu : T.duelEmpate;
-    // nos dois casos dá pra voltar ao quarto: a fase conta pra quem jogou
-    venceu = modoQuarto;
-    mostrar(emoji, titulo, `Você ${eu}  ×  ${ela} Ela` + (duelo.caiu ? "\n(a conexão caiu antes do fim)" : ""), modoQuarto ? T.voltarQuarto : "");
-    if (!duelo.caiu) {
-      const b = $("btn-revanche");
-      b.textContent = duelo.meuRev ? T.revancheEsp : T.revanche;
-      b.disabled = duelo.meuRev; b.classList.remove("escondido");
-    }
-  }
-  function tentarRevanche() {
-    if (duelo && duelo.host && duelo.meuRev && duelo.outroRev) { Rede.enviar({ t: "start" }); comecar(); }
-  }
-  $("btn-revanche").addEventListener("click", () => {
-    if (!duelo || duelo.meuRev) return;
-    duelo.meuRev = true; Rede.enviar({ t: "rev" });
-    $("btn-revanche").textContent = GARRA.textos.revancheEsp; $("btn-revanche").disabled = true;
-    tentarRevanche();
-  });
   $("btn-comecar").addEventListener("click", () => {
     if (venceu) location.href = "index.html?concluiu=" + GARRA.idAdesivo;
     else comecar();
   });
 
-  Rede.aoReceber((m) => {
-    if (!duelo || !m) return;
-    if (m.t === "pts") {
-      duelo.outroPts = m.p; $("adv").textContent = "🎀 " + m.p;
-      if (duelo.meuFim && !duelo.outroFim) resolverDuelo();
-    } else if (m.t === "fim") {
-      duelo.outroPts = m.p; duelo.outroFim = true; $("adv").textContent = "🎀 " + m.p;
-      resolverDuelo();
-    } else if (m.t === "rev") {
-      duelo.outroRev = true; tentarRevanche();
-    } else if (m.t === "start") {
-      comecar();
-    }
-  });
-  Rede.aoAbrir(() => {
-    if (!duelo) return;
-    if (duelo.host) { Rede.enviar({ t: "start" }); comecar(); }
-    else lobbyMsg("🎉", GARRA.textos.loPronto, "Já vai começar…");
-  });
-  Rede.aoCair(() => {
-    if (!duelo || duelo.caiu) return;
-    duelo.caiu = true;
-    if (duelo.meuFim) { duelo.outroFim = true; resolverDuelo(); return; }
-    // caiu no meio do jogo: dá pra seguir treinando sozinho
-    jogando = false; encerrando = false; contagem = 0; duelo = null;
-    $("adv").classList.add("escondido");
-    mostrar("😕", GARRA.textos.loCaiu, "Dá pra continuar treinando sozinho.", "Jogar sozinho");
-  });
-
-  // ----- sala (lobby) -----
-  const novoDuelo = (host) => ({ host, meuFim: false, outroFim: false, outroPts: 0, meuRev: false, outroRev: false, caiu: false });
-  function lobbyMsg(emoji, titulo, texto) {
-    $("lb-emoji").textContent = emoji; $("lb-titulo").textContent = titulo; $("lb-texto").textContent = texto;
-  }
-  function lobbyMenu(aviso) {
-    lobbyMsg("🧸", GARRA.textos.loTitulo, aviso || GARRA.textos.loTexto);
-    $("lb-menu").classList.remove("escondido");
-    $("lb-codigo").classList.add("escondido");
-    $("lb-cancelar").classList.add("escondido");
-    $("lobby").classList.remove("escondido");
-  }
-  function lobbyEspera(emoji, titulo, texto, codigo) {
-    lobbyMsg(emoji, titulo, texto);
-    $("lb-menu").classList.add("escondido");
-    $("lb-codigo").classList.toggle("escondido", !codigo);
-    if (codigo) $("lb-codigo").textContent = codigo;
-    $("lb-cancelar").classList.remove("escondido");
-  }
-  function falhaLobby(e) {
-    if (Rede.conectado) return; // erro depois de conectar não derruba o jogo
-    Rede.sair(); duelo = null;
-    lobbyMenu(e && e.type === "peer-unavailable" ? GARRA.textos.loNaoAchou : GARRA.textos.loSemNet);
-  }
-  $("lb-criar").addEventListener("click", () => {
-    duelo = novoDuelo(true);
-    lobbyEspera("🎀", GARRA.textos.loTitulo, "Criando a sala…", "");
-    Rede.criarSala((codigo) => lobbyEspera("🎀", GARRA.textos.loTitulo, GARRA.textos.loAguardando, codigo), falhaLobby);
-  });
-  $("lb-entrar").addEventListener("click", () => {
-    const cod = $("lb-input").value.trim().toUpperCase();
-    if (cod.length < 4) { lobbyMenu("Digite o código de 4 letras que ela passou."); return; }
-    duelo = novoDuelo(false);
-    lobbyEspera("🔎", GARRA.textos.loTitulo, GARRA.textos.loEntrando, "");
-    Rede.entrar(cod, falhaLobby);
-  });
-  $("lb-cancelar").addEventListener("click", () => { Rede.sair(); duelo = null; lobbyMenu(); });
-  $("lb-solo").addEventListener("click", () => {
-    duelo = null; $("lobby").classList.add("escondido");
-    mostrar("🧸", GARRA.textos.titulo, modoQuarto ? GARRA.textos.introQuarto : GARRA.textos.intro, GARRA.textos.botao);
-  });
-
   pilha = criarPilha();
-  $("overlay").classList.add("escondido");
-  lobbyMenu();
+  mostrar("🧸", GARRA.textos.titulo, modoQuarto ? GARRA.textos.introQuarto : GARRA.textos.intro, GARRA.textos.botao);
 
   let ultimo = 0;
   function loop(agora) {
@@ -615,5 +472,5 @@ const GARRA = {
   requestAnimationFrame(loop);
 
   // ganchos pra testar no console
-  window.Garra = { get duelo() { return duelo; }, estado: () => ({ pontos, restante, estado: g.estado, naPilha: pilha.length }), g, get pilha() { return pilha; }, acabar: () => { restante = 0; }, registro, avancar: (s) => { for (let i = 0; i < s * 60; i++) atualizar(1 / 60); }, comecar };
+  window.Garra = { estado: () => ({ pontos, restante, estado: g.estado, naPilha: pilha.length }), g, get pilha() { return pilha; }, acabar: () => { restante = 0; }, registro, avancar: (s) => { for (let i = 0; i < s * 60; i++) atualizar(1 / 60); }, comecar };
 })();

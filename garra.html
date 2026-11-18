@@ -7,14 +7,13 @@
   <title>Garra 🧸</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="garra.css?v=3" />
+  <link rel="stylesheet" href="garra.css" />
 </head>
 <body>
   <main id="app">
     <header>
       <span id="tempo">⏱ 60</span>
       <span id="pontos">🧸 0</span>
-      <span id="adv" class="escondido">🎀 0</span>
     </header>
 
     <div id="palco"><canvas id="tela"></canvas></div>
@@ -31,31 +30,10 @@
         <h2 id="ov-titulo"></h2>
         <p id="ov-texto"></p>
         <button id="btn-comecar"></button>
-        <button id="btn-revanche" class="sec escondido">Revanche 🔁</button>
-      </div>
-    </div>
-
-    <div id="lobby">
-      <div class="card">
-        <div class="emoji" id="lb-emoji">🧸</div>
-        <h2 id="lb-titulo"></h2>
-        <p id="lb-texto"></p>
-        <div id="lb-codigo" class="codigo escondido"></div>
-        <div id="lb-menu" class="coluna">
-          <button id="lb-criar">Criar sala 🎀</button>
-          <div class="linha">
-            <input id="lb-input" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" />
-            <button id="lb-entrar" class="sec">Entrar</button>
-          </div>
-          <button id="lb-solo" class="sec">Jogar sozinho (treino)</button>
-        </div>
-        <button id="lb-cancelar" class="sec escondido">Cancelar</button>
       </div>
     </div>
   </main>
 
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <script src="rede.js?v=3"></script>
-  <script src="garra.js?v=3"></script>
+  <script src="garra.js"></script>
 </body>
 </html>
