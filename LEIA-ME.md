@@ -110,3 +110,22 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 - A capivara é rara e vale 3 pontos. Tudo (tempo, chance, pelúcias, pontos, textos) fica no bloco `GARRA` do topo do `garra.js`.
 - Pra usar imagens de referência: coloque PNGs com fundo transparente em `fotos/` e ponha `img: "fotos/arquivo.png"` na pelúcia.
 - Ainda falta: o placar do adversário e a conexão entre os dois celulares.
+
+## Quarto + garra ligados (ciclo completo)
+- `quarto.html` agora mostra **um adesivo por vez**. A ordem está em `QUARTO.ordem` (começa pela capivara).
+- Colar o adesivo **abre a fase dele** (`QUARTO.fases`). Por enquanto só a capivara tem fase: abre `garra.html?quarto`.
+- Na garra, em modo quarto, vence quem fizer a meta (`GARRA.metaQuarto`, hoje 3 pontos, provisório até existir adversário). Vencendo, "Voltar ao quarto" libera o próximo adesivo. Perdendo, "Tentar de novo".
+- Adesivos sem fase ainda contam como concluídos na hora (aparece "Essa fase ainda vai chegar").
+- O progresso fica no navegador (`quarto-progresso` e `quarto-progresso-fases`). O botão ↺ no quarto zera tudo.
+
+## Garra v2 (pilha fixa e bichinhos variados)
+- A pilha é **fixa**: 12 bichinhos (3 capivaras, 4 Stitch, 3 Pikachu, 2 Jigglypuff) e o que você pega **não volta**. Os de cima descem pra ocupar o espaço.
+- Cada tipo tem tamanho, forma, pontos e **chance de a garra segurar** diferentes (capivara vale 3 mas escorrega mais; Pikachu/Jigglypuff valem 1 e seguram melhor). Cada bichinho também sai com tamanho e posição (em pé, de lado, deitado) levemente diferentes.
+- Pontaria conta: a garra precisa estar bem em cima do bichinho pra agarrar; senão "Errou!".
+- Tudo no bloco `GARRA.tipos` do `garra.js` (qtd, rx/ry, pontos, chance). Os desenhos são genéricos; pra usar imagens suas, é só trocar a função `pelucia`.
+- Meta do modo quarto (`metaQuarto`): 4 pontos, provisória.
+
+## Garra: sorte mais variada
+- A chance de segurar agora muda **a cada tentativa**: depende do tipo do bichinho, da **mira** (bem centralizado segura mais) e de um pouco de sorte. Nada de padrão fixo.
+- A falha também varia: pode escorregar **logo ao levantar**, **no meio do caminho** ou **quase na saída** ("Tão perto! 😭").
+- Teste feito: o resultado de uma tentativa não influencia a próxima (a chance depois de acerto e depois de falha é praticamente a mesma).

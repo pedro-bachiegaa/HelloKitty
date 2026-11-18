@@ -12,6 +12,14 @@ const QUARTO = {
   distanciaAcerto: 30,   // o quão perto do lugar certo precisa soltar
   errosAteDica: 3,       // depois de tantos erros o lugar certo pisca
   chaveSalvar: "quarto-progresso",
+  // Ordem em que os adesivos aparecem (um por vez). O próximo só libera depois de vencer a fase do anterior.
+  ordem: ["capivara", "cama", "janela", "quadro", "poema", "estante", "luminaria", "planta", "tapete"],
+  // Fases já criadas: id do adesivo -> página da fase. Adesivo sem fase conta como concluído na hora.
+  fases: { capivara: "garra.html?quarto" },
+  faseTitulo: "Hora da fase! 🧸",
+  faseTexto: "Você colou: ",
+  faseBotao: "Jogar",
+  semFase: "Essa fase ainda vai chegar 🛠️",
 
   // Cada item é desenhado centrado em (0,0). cx/cy = onde fica no quarto (quarto: 300 x 400).
   // z = ordem de desenho (maior fica na frente).
@@ -56,7 +64,7 @@ const QUARTO = {
       <ellipse cx="-8" cy="-6" rx="6" ry="14" transform="rotate(-25 -8 -6)" fill="#7fd08c"/>
       <ellipse cx="8" cy="-8" rx="6" ry="15" transform="rotate(25 8 -8)" fill="#6cc27a"/>
       <ellipse cx="0" cy="-14" rx="6" ry="16" fill="#8ddc99"/>` },
-    { id: "capivara", nome: "Capivara", cx: 185, cy: 243, w: 44, h: 30, z: 5, svg: `
+    { id: "capivara", nome: "Capivara", cx: 195, cy: 322, w: 44, h: 30, z: 5, svg: `
       <rect x="-14" y="10" width="5" height="6" rx="2" fill="#9a6f46"/><rect x="6" y="10" width="5" height="6" rx="2" fill="#9a6f46"/>
       <ellipse cx="-1" cy="3" rx="20" ry="11" fill="#c79a6b"/>
       <ellipse cx="15" cy="-2" rx="9" ry="8" fill="#c79a6b"/>
@@ -109,15 +117,18 @@ const QUARTO = {
   try { salvo = JSON.parse(localStorage.getItem(QUARTO.chaveSalvar) || "[]"); } catch (e) { salvo = []; }
   const itens = QUARTO.itens.map((d, i) => ({ d, i, g: null, estado: "bandeja", erros: 0, slot: { x: 0, y: 0, s: 1 }, dica: null, t: null }));
 
-  // posiciona os adesivos na bandeja em duas fileiras
-  const porFila = Math.ceil(itens.length / 2);
-  itens.forEach((it, n) => {
-    const fila = n < porFila ? 0 : 1;
-    const naFila = fila === 0 ? porFila : itens.length - porFila;
-    const k = fila === 0 ? n : n - porFila;
-    const passo = 300 / porFila;
-    const x0 = 150 - ((naFila - 1) * passo) / 2;
-    it.slot = { x: x0 + k * passo, y: 446 + fila * 58, s: Math.min(1, 46 / it.d.w, 40 / it.d.h) };
+  // concluídas = adesivos cuja fase já foi vencida. Vem de ?concluiu=id (a fase volta pra cá assim).
+  const chaveFases = QUARTO.chaveSalvar + "-fases";
+  let concluidas = [];
+  try { concluidas = JSON.parse(localStorage.getItem(chaveFases) || "[]"); } catch (e) { concluidas = []; }
+  const volta = new URLSearchParams(location.search).get("concluiu");
+  if (volta && !concluidas.includes(volta)) concluidas.push(volta);
+  if (volta) history.replaceState(null, "", location.pathname);
+  const ordenados = QUARTO.ordem.map((id) => itens.find((i) => i.d.id === id)).filter(Boolean);
+
+  // o adesivo da vez fica sozinho no meio da bandeja
+  itens.forEach((it) => {
+    it.slot = { x: 150, y: 468, s: Math.min(1.4, 90 / it.d.w, 70 / it.d.h) };
     it.g = el("g", { class: "item" }, camadaBandeja);
     it.g.innerHTML = it.d.svg;
     it.g.dataset.id = it.d.id;
@@ -192,7 +203,22 @@ const QUARTO = {
     reordenarSala();
     toast(sorteio(QUARTO.acerto));
     salvar();
+    if (QUARTO.fases[it.d.id]) setTimeout(() => mostrarFase(it), 700);
+    else { concluir(it.d.id); toast(QUARTO.semFase); }
     atualizar();
+  }
+
+  // colar o adesivo abre a fase dele
+  function mostrarFase(it) {
+    $("fase-titulo").textContent = QUARTO.faseTitulo;
+    $("fase-texto").textContent = QUARTO.faseTexto + it.d.nome;
+    $("btn-fase").textContent = QUARTO.faseBotao;
+    $("btn-fase").onclick = () => { location.href = QUARTO.fases[it.d.id]; };
+    $("fase").classList.remove("escondido");
+  }
+  function concluir(id) {
+    if (!concluidas.includes(id)) concluidas.push(id);
+    try { localStorage.setItem(chaveFases, JSON.stringify(concluidas)); } catch (e) { /* sem salvar */ }
   }
 
   function errou(it) {
@@ -225,14 +251,18 @@ const QUARTO = {
     try { localStorage.setItem(QUARTO.chaveSalvar, JSON.stringify(itens.filter((i) => i.estado === "travado").map((i) => i.d.id))); } catch (e) { /* sem salvar */ }
   }
 
+  // mostra só o adesivo da vez na bandeja; o resto espera a fase anterior ser vencida
   function atualizar() {
-    const n = itens.filter((i) => i.estado === "travado").length;
-    $("contador").textContent = `🧸 ${n}/${itens.length}`;
-    if (n === itens.length) setTimeout(() => $("fim").classList.remove("escondido"), 700);
+    const vez = ordenados.find((i) => !concluidas.includes(i.d.id));
+    itens.forEach((it) => { it.g.style.display = it.estado === "travado" || it === vez ? "" : "none"; });
+    $("contador").textContent = `🧸 ${concluidas.length}/${itens.length}`;
+    if (!vez) setTimeout(() => $("fim").classList.remove("escondido"), 700);
   }
 
   $("btn-comecar").addEventListener("click", () => toast(QUARTO.textoEmBreve));
   $("btn-reiniciar").addEventListener("click", () => {
+    concluidas = [];
+    try { localStorage.setItem(chaveFases, "[]"); } catch (e) { /* sem salvar */ }
     itens.forEach((it) => {
       it.estado = "bandeja"; it.erros = 0; it.g.classList.remove("travado");
       if (it.dica) { it.dica.remove(); it.dica = null; }
@@ -240,6 +270,7 @@ const QUARTO = {
       poe(it, it.slot.x, it.slot.y, it.slot.s);
     });
     $("fim").classList.add("escondido");
+    $("fase").classList.add("escondido");
     salvar();
     atualizar();
   });
@@ -253,5 +284,12 @@ const QUARTO = {
     }
   });
   reordenarSala();
+  if (volta) { toast("Fase vencida! 🎉"); }
+  concluidas = concluidas.filter((id) => itens.some((i) => i.d.id === id));
+  try { localStorage.setItem(chaveFases, JSON.stringify(concluidas)); } catch (e) { /* sem salvar */ }
   atualizar();
+  // se colou o adesivo mas ainda não venceu a fase, a fase abre de novo
+  const pendente = ordenados.find((i) => i.estado === "travado" && !concluidas.includes(i.d.id));
+  if (pendente && QUARTO.fases[pendente.d.id]) mostrarFase(pendente);
+  else if (pendente) concluir(pendente.d.id), atualizar();
 })();
