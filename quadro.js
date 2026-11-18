@@ -115,6 +115,7 @@ const QUADRO = {
   const $ = (id) => document.getElementById(id);
   const tela = $("tela");
   const modoQuarto = new URLSearchParams(location.search).has("quarto");
+  if (modoQuarto) $("btn-sair").classList.remove("escondido"); // sair da fase e voltar ao quarto
 
   let iq = 0;            // quadro atual
   let quadro, ordem;     // dados do quadro atual

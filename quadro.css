@@ -69,6 +69,13 @@ header h1 { font-size: 1.25rem; color: var(--rosa-escuro); }
 
 .escondido { display: none !important; }
 
+#btn-sair {
+  position: absolute; top: 10px; left: 10px; z-index: 5;
+  width: 40px; height: 40px; border-radius: 50%; background: #fff; color: var(--rosa-escuro);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.3rem; text-decoration: none;
+  box-shadow: 0 3px 10px rgba(214, 51, 108, .25);
+}
+
 #fim {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   background: rgba(255, 238, 245, .78); padding: 16px; animation: aparecer .5s ease;

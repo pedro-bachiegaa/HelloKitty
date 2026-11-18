@@ -144,3 +144,9 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 - A fase do quadro agora tem **dois quadros em sequência**, baseados nos que vocês pintaram: as carpas com lótus (7 cores) e a casa do "Up" com balões (8 cores). Terminando o segundo, libera o adesivo no quarto.
 - Os desenhos são aproximações em formas simples (tela 300x300), no bloco `QUADRO.quadros` do `quadro.js`. Cada quadro tem `paleta` (cores na ordem de pintura) e `formas` (regiões, cada uma com sua cor `n`).
 - Dá pra refinar: mudar a ordem das cores, os tons, ou o formato das regiões. Quanto mais fiel a forma ao quadro, mais bonito fica ao pintar.
+
+## Sair das fases e ordem dos adesivos (2026-11-18)
+- Dentro de uma fase aberta pelo quarto (`?quarto`), o botão **←** (canto de cima à esquerda) volta ao quarto sem terminar (`index.html?pausa`). O adesivo continua colado e a fase fica pendente.
+- No quarto, a janela da fase tem **Agora não**, que fecha o aviso. Tocar num adesivo já colado com fase pendente reabre a fase.
+- Nova ordem dos adesivos: capivara, **quadro**, cama, janela, poema... (o quadro é o segundo, logo depois da capivara). Mude em `QUARTO.ordem` no `quarto.js`.
+- Ao mudar CSS/JS, aumente o `?v=` nos HTMLs pra o celular não usar cache velho (agora em `?v=5`/`?v=6`).

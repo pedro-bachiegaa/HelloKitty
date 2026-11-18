@@ -439,6 +439,7 @@ const GARRA = {
   // Modo quarto (?quarto): vence quem bate a meta; vencendo, volta pro quarto e libera o próximo adesivo.
   // (Quando o adversário existir, a meta vira "pegar mais que ele".)
   const modoQuarto = location.search.includes("quarto");
+  if (modoQuarto) $("btn-sair").classList.remove("escondido"); // sair da fase e voltar ao quarto
   let venceu = false;
   function terminar() {
     if (!jogando) return;

@@ -41,6 +41,12 @@ header span.urgente { background: #ff6f91; color: #fff; }
   background: rgba(255, 238, 245, .75); padding: 16px;
 }
 #overlay.escondido { display: none; }
+.escondido { display: none !important; }
+#btn-sair {
+  position: relative; z-index: 10; flex: none; width: 44px; display: flex; align-items: center; justify-content: center;
+  background: #fff; border-radius: 999px; color: var(--rosa-escuro); font-weight: 700; font-size: 1.3rem; text-decoration: none;
+  box-shadow: 0 4px 12px rgba(214, 51, 108, .2);
+}
 .card {
   background: #fff; border-radius: 24px; padding: 26px 22px; max-width: 360px; width: 100%;
   text-align: center; box-shadow: 0 12px 40px rgba(214, 51, 108, .22);

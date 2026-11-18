@@ -13,12 +13,13 @@ const QUARTO = {
   errosAteDica: 3,       // depois de tantos erros o lugar certo pisca
   chaveSalvar: "quarto-progresso",
   // Ordem em que os adesivos aparecem (um por vez). O próximo só libera depois de vencer a fase do anterior.
-  ordem: ["capivara", "cama", "janela", "quadro", "poema", "estante", "luminaria", "planta", "tapete"],
+  ordem: ["capivara", "quadro", "cama", "janela", "poema", "estante", "luminaria", "planta", "tapete"],
   // Fases já criadas: id do adesivo -> página da fase. Adesivo sem fase conta como concluído na hora.
   fases: { capivara: "garra.html?quarto", quadro: "quadro.html?quarto" },
   faseTitulo: "Hora da fase! 🧸",
   faseTexto: "Você colou: ",
   faseBotao: "Jogar",
+  faseDepois: "Agora não",
   semFase: "Essa fase ainda vai chegar 🛠️",
 
   // Cada item é desenhado centrado em (0,0). cx/cy = onde fica no quarto (quarto: 300 x 400).
@@ -123,7 +124,8 @@ const QUARTO = {
   try { concluidas = JSON.parse(localStorage.getItem(chaveFases) || "[]"); } catch (e) { concluidas = []; }
   const volta = new URLSearchParams(location.search).get("concluiu");
   if (volta && !concluidas.includes(volta)) concluidas.push(volta);
-  if (volta) history.replaceState(null, "", location.pathname);
+  const pausa = new URLSearchParams(location.search).has("pausa"); // saiu da fase sem terminar
+  if (volta || pausa) history.replaceState(null, "", location.pathname);
   const ordenados = QUARTO.ordem.map((id) => itens.find((i) => i.d.id === id)).filter(Boolean);
 
   // o adesivo da vez fica sozinho no meio da bandeja
@@ -166,6 +168,8 @@ const QUARTO = {
 
   let ativo = null;
   function comecarArrasto(e, it) {
+    // adesivo já colado com a fase ainda por vencer: tocar nele reabre a fase
+    if (it.estado === "travado" && QUARTO.fases[it.d.id] && !concluidas.includes(it.d.id) && !ativo) { mostrarFase(it); return; }
     if (it.estado !== "bandeja" || ativo) return;
     e.preventDefault();
     ativo = it;
@@ -214,6 +218,8 @@ const QUARTO = {
     $("fase-texto").textContent = QUARTO.faseTexto + it.d.nome;
     $("btn-fase").textContent = QUARTO.faseBotao;
     $("btn-fase").onclick = () => { location.href = QUARTO.fases[it.d.id]; };
+    $("btn-depois").textContent = QUARTO.faseDepois;
+    $("btn-depois").onclick = () => $("fase").classList.add("escondido");
     $("fase").classList.remove("escondido");
   }
   function concluir(id) {
@@ -290,6 +296,6 @@ const QUARTO = {
   atualizar();
   // se colou o adesivo mas ainda não venceu a fase, a fase abre de novo
   const pendente = ordenados.find((i) => i.estado === "travado" && !concluidas.includes(i.d.id));
-  if (pendente && QUARTO.fases[pendente.d.id]) mostrarFase(pendente);
+  if (pendente && QUARTO.fases[pendente.d.id]) { if (!pausa) mostrarFase(pendente); }
   else if (pendente) concluir(pendente.d.id), atualizar();
 })();

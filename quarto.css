@@ -80,6 +80,8 @@ header h1 { font-size: 1.25rem; color: var(--rosa-escuro); }
   box-shadow: 0 6px 16px rgba(214, 51, 108, .3);
 }
 
+.card button.sec { background: #fff; color: var(--rosa-escuro); border: 2px solid #ffc2d9; box-shadow: none; }
+
 #toast {
   position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
   background: #fff; padding: 8px 16px; border-radius: 999px;
