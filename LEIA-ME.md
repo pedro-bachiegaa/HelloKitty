@@ -154,3 +154,8 @@ A placa do condomínio é o `nomeCondominio` (hoje: "Jau").
 ## Adesivos juntos na bandeja (2026-11-18)
 - Capivara e quadro agora aparecem **lado a lado** na bandeja desde o começo; cada um abre a sua fase quando colado. Os outros adesivos seguem um por vez.
 - Em `QUARTO.ordem` (quarto.js), uma entrada pode ser um id ou uma lista de ids que ficam disponíveis juntos, ex.: `[["capivara","quadro"],"cama","janela",...]`.
+
+## Adesivo que vira o quadro real (2026-11-18)
+- Ao vencer a fase do quadro e voltar ao quarto, o adesivo do quadro na parede **vira a mãozinha de vocês** (quadro de 01/11/2026, P + Ê), com uma animação de revelação. Fica assim nas próximas vezes que abrir o quarto.
+- Isso é configurável por adesivo: no `quarto.js`, o item pode ter `svgFinal` (o desenho final) e `textoVolta` (a mensagem ao voltar). Dá pra usar o mesmo truque em outros adesivos (ex.: o poema virar o poema de verdade).
+- O desenho é uma aproximação em SVG. Se quiser a foto real no lugar, dá pra recortar o quadro (PNG) e usar como imagem.

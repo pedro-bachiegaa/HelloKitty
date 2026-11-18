@@ -40,6 +40,13 @@ header h1 { font-size: 1.25rem; color: var(--rosa-escuro); }
   filter: drop-shadow(0 10px 24px rgba(214, 51, 108, .22));
 }
 
+.revela { transform-box: fill-box; transform-origin: center; animation: revela 1s ease both; }
+@keyframes revela {
+  0% { transform: scale(.4) rotate(-10deg); opacity: 0; }
+  55% { transform: scale(1.2) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+
 .item { cursor: grab; }
 .item.arrastando { cursor: grabbing; }
 .item.travado { cursor: default; }

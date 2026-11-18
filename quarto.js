@@ -52,7 +52,23 @@ const QUARTO = {
       <rect x="-30" y="-37" width="60" height="75" rx="3" fill="#e9b872"/>
       <rect x="-25" y="-32" width="50" height="65" fill="#fff7e6"/>
       <circle cx="-6" cy="-12" r="14" fill="#ffd0e1"/><circle cx="8" cy="-4" r="11" fill="#ffe08a"/>
-      <path d="M-25 20q12 -14 25 0t25 -4v17h-50z" fill="#ffb3cf"/><path d="M-25 26q12 -10 25 0t25 -3v10h-50z" fill="#ffe9a8"/>` },
+      <path d="M-25 20q12 -14 25 0t25 -4v17h-50z" fill="#ffb3cf"/><path d="M-25 26q12 -10 25 0t25 -3v10h-50z" fill="#ffe9a8"/>`,
+      // depois de vencer a fase, o adesivo vira o quadro de verdade: a mãozinha de vocês
+      textoVolta: "O adesivo virou o quadro de vocês! 🖼️💖",
+      svgFinal: `
+      <rect x="-38" y="-38" width="76" height="76" rx="2" fill="#e9e2cc"/>
+      <rect x="-35" y="-35" width="70" height="70" fill="#fbf8ee"/>
+      <g transform="translate(-3 -2) rotate(-6)">
+        <ellipse cx="-17" cy="-9" rx="3.4" ry="9" transform="rotate(-18 -17 -9)" fill="#3f56d6"/><ellipse cx="-16" cy="-5" rx="2" ry="5" transform="rotate(-18 -16 -5)" fill="#ea6aa8"/>
+        <ellipse cx="-9" cy="-17" rx="3.4" ry="10" transform="rotate(-6 -9 -17)" fill="#3f56d6"/><ellipse cx="-8" cy="-13" rx="2" ry="5" fill="#ea6aa8"/>
+        <ellipse cx="1" cy="-21" rx="3.6" ry="11" fill="#3f56d6"/><ellipse cx="-1" cy="-17" rx="2" ry="5" fill="#ea6aa8"/>
+        <ellipse cx="11" cy="-16" rx="3.4" ry="10" transform="rotate(12 11 -16)" fill="#3f56d6"/><ellipse cx="9" cy="-12" rx="2" ry="5" transform="rotate(12 9 -12)" fill="#ea6aa8"/>
+        <ellipse cx="22" cy="1" rx="3.8" ry="8" transform="rotate(58 22 1)" fill="#3f56d6"/><ellipse cx="19" cy="3" rx="2" ry="4" transform="rotate(58 19 3)" fill="#ea6aa8"/>
+        <path d="M-16 -2q16 -6 32 0q4 12 -2 24q-14 6 -28 0q-6 -12 -2 -24z" fill="#3f56d6"/>
+        <ellipse cx="-3" cy="12" rx="10" ry="8" fill="#ea6aa8"/><ellipse cx="-2" cy="12" rx="3.5" ry="3" fill="#fbf8ee"/>
+      </g>
+      <text x="32" y="25" text-anchor="end" font-family="Fredoka, sans-serif" font-weight="700" font-size="6" fill="#2a2a2a">01/11/2026</text>
+      <text x="32" y="32" text-anchor="end" font-family="Fredoka, sans-serif" font-weight="700" font-size="6.5" fill="#2a2a2a">P + Ê</text>` },
     { id: "poema", nome: "Poema", cx: 262, cy: 165, w: 40, h: 52, z: 3, svg: `
       <g transform="rotate(4)"><rect x="-20" y="-26" width="40" height="52" rx="2" fill="#fffdf5" stroke="#e8d9b0"/>
       <path d="M-13 -14h26M-13 -7h20M-13 0h26M-13 7h16" stroke="#cdb99a" stroke-width="2" stroke-linecap="round"/>
@@ -263,7 +279,16 @@ const QUARTO = {
   }
 
   // mostra só o adesivo da vez na bandeja; o resto espera a fase anterior ser vencida
+  function aplicarFinais() {
+    for (const it of itens) {
+      if (!it.d.svgFinal || it.final || !concluidas.includes(it.d.id)) continue;
+      it.final = true;
+      const anima = volta === it.d.id; // acabou de voltar da fase: faz a revelação
+      it.g.innerHTML = `<g class="${anima ? "revela" : ""}">${it.d.svgFinal}</g>`;
+    }
+  }
   function atualizar() {
+    aplicarFinais();
     const vez = grupos.find((g) => g.some((i) => !concluidas.includes(i.d.id)));
     itens.forEach((it) => { it.g.style.display = it.estado === "travado" || (vez && vez.includes(it)) ? "" : "none"; });
     $("contador").textContent = `🧸 ${concluidas.length}/${itens.length}`;
@@ -295,7 +320,7 @@ const QUARTO = {
     }
   });
   reordenarSala();
-  if (volta) { toast("Fase vencida! 🎉"); }
+  if (volta) { const v = itens.find((i) => i.d.id === volta); toast((v && v.d.textoVolta) || "Fase vencida! 🎉"); }
   concluidas = concluidas.filter((id) => itens.some((i) => i.d.id === id));
   try { localStorage.setItem(chaveFases, JSON.stringify(concluidas)); } catch (e) { /* sem salvar */ }
   atualizar();
